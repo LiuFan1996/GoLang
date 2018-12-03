@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<title>go中defer,panic,recover详解 go中的异常处理  - Go语言中文网 - Golang中文社区</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+	<meta charset="utf-8">
+	<link rel="shortcut icon" href="https://static.studygolang.com/img/favicon.ico">
+	<link rel="apple-touch-icon" type="image/png" href="https://static.studygolang.com/static/img/logo2.png">
+	<meta name="keywords" content="Go,Golang,Go语言">
+<meta name="description" content="golang中defer,panic,recover是很常用的三个特性，三者一起使用可以充当其他语言中try…catch…的角色，而defer本身又像其他语言的析构函数 defer 在函数返回之前调用，用于资源释放、打印日志、异常捕获等 f, err := os.Open(filename) if err != nil { return err } /** * 这里defer要写在err判断的后边">
+	<meta name="author" content="polaris <polaris@studygolang.com>">
+	<link rel="canonical" href="https://studygolang.com/" />
+
+	
+	<link rel="stylesheet" href="https://static.studygolang.com/cssjs/fonts_googleapi.css">
+	<link rel="stylesheet" href="https://static.studygolang.com/cssjs/cosmo_bootstrap.min.css">
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
+	<link rel="stylesheet" href="https://static.studygolang.com/static/dist/css/sg_libs.min.css"/>
+	<link rel="stylesheet" href="https://static.studygolang.com/static/dist/css/sg_styles.min.css?v=0.3"/>
+	
+	
+
+<style>
+pre .line { margin: auto; line-height: 20px; border-bottom: none; }
+.image-package .image-container-fill { padding-bottom: 0 !important; }
+</style>
+
+
+
+<link href="https://cdn.staticfile.org/prism/9000.0.1/themes/prism-okaidia.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/prism/9000.0.1/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet">
+
+
+
+
+	
+	<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+	<script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+	
+</head>
+<body>
+	<header class="navbar navbar-default navbar-fixed-top" role="navigation" style="position:relative;">
+		<div class="container">
+			
+			<div class="navbar-header">
+				<a href="/" class="navbar-brand" title="Go语言中文网"><img alt="Go语言中文网" src="https://static.studygolang.com/img/logo1.png" style="margin-top: -7px; height: 45px;"></a>
+				<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+			</div>
+			<div class="navbar-collapse collapse" id="navbar-main">
+				<ul class="nav navbar-nav">
+					<li class="">
+						<a href="/topics">主题</a>
+					</li>
+					<li class="active">
+						<a href="/articles">文章</a>
+					</li>
+					<li class="">
+						<a href="/projects">项目</a>
+					</li>
+					<li class="">
+						<a href="/resources">资源</a>
+					</li>
+					<li class="">
+						<a href="/books">图书</a>
+					</li>
+					<li class="dropdown ">
+						
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#" id="readings">晨读 <span class="caret"></span></a>
+						<ul class="dropdown-menu" aria-labelledby="readings">
+							<li><a href="/readings">Go晨读</a></li>
+							<li><a href="/readings?rtype=1">综合晨读</a></li>
+						</ul>
+						
+					</li>
+					<li class="">
+						<a href="/dl">下载<i class="newfuture"></i></a>
+					</li>
+					<li class="dropdown ">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#" id="docs">官方文档 <span class="caret"></span></a>
+						<ul class="dropdown-menu" aria-labelledby="docs">
+						
+							<li><a href="http://docs.studygolang.com" target="_blank">英文文档</a></li>
+							<li><a href="http://docscn.studygolang.com" target="_blank">中文文档</a></li>
+							<li><a href="/pkgdoc">标准库中文版</a></li>
+							<li role="presentation" class="divider"></li>
+							<li><a href="http://tour.studygolang.com" target="_blank">Go指南</a></li>
+						
+						</ul>
+					</li>
+				</ul>
+				<form class="navbar-form navbar-left" action="/search" role="search" target="_blank">
+					<input type="text" name="q" class="form-control search-query" placeholder="搜索" value="">
+				</form>
+				<ul class="nav navbar-nav navbar-right" id="userbar">
+					
+					<li class="first"><a href="/account/register">注册</a></li><li class="last"><a href="/account/login">登录</a></li>
+					
+				</ul>
+			</div>
+		</div>
+	</header>
+	<div class="wrapper" id="wrapper">
+		<div class="container" role="main">
+		
+
+			
+<div class="row">
+	<div class="col-md-9 col-sm-6">
+		<div class="sep20"></div>
+		<ol class="breadcrumb">
+			<li><a href="/">首页</a></li>
+			<li><a href="/articles">文章</a></li>
+		</ol>
+		<div class="page">
+			<div class="box_white">
+				<div class="title">
+					
+					<h1 id="title" data-id="15776">
+						go中defer,panic,recover详解 go中的异常处理
+					</h1>
+					<small class="c9">
+					
+						
+						<span>smoke_zl</span>
+						
+					
+						 · <span title="2018-10-25 10:34:44" class="timeago"></span> · 79 次点击 · 
+						<span class="read-time"></span> · 
+						<span class="timeago" title="2018-10-25 19:54:05"></span> 开始浏览 &nbsp; &nbsp;
+					
+					</small>
+				</div>
+				
+				<div class="cell">
+					
+					<div id="myeditor" class="content article-entry">
+						<div class="show-content-free">
+            <p>golang中defer,panic,recover是很常用的三个特性，三者一起使用可以充当其他语言中try…catch…的角色，而defer本身又像其他语言的析构函数</p>
+<h3>defer</h3>
+<h6>在函数返回之前调用，用于资源释放、打印日志、异常捕获等</h6>
+<pre><code class="go">f, err := os.Open(filename)
+if err != nil {
+    return err
+}
+/**
+ * 这里defer要写在err判断的后边而不是os.Open后边
+ * 如果资源没有获取成功，就没有必要对资源执行释放操作
+ * 如果err不为nil而执行资源执行释放操作，有可能导致panic
+ */
+defer f.Close()
+</code></pre>
+<h6>如果有多个defer表达式，调用顺序类似于栈，越后面的defer表达式越先被调用(后进先出)</h6>
+<pre><code class="go">func main() {
+    defer fmt.Println(1)
+    defer fmt.Println(2)
+    defer fmt.Println(3)
+    defer fmt.Println(4)
+}
+</code></pre>
+<p>结果：</p>
+<pre><code>4
+3
+2
+1
+</code></pre>
+<h6>如果含有 defer 表达式的函数有返回值，defer 表达式可能会在设置函数返回值之后，在返回到调用函数之前修改返回值，使最终的函数返回值与你想象的不一致，这里很容易踩坑，来几个🌰</h6>
+<p>例1</p>
+<pre><code class="go">func f() (result int) {
+    defer func() {
+        result++
+    }()
+    return 0
+}
+</code></pre>
+<p>例2</p>
+<pre><code>func f() (r int) {
+    t := 5
+    defer func() {
+        t = t + 5
+    }()
+    return t
+}
+</code></pre>
+<p>例3</p>
+<pre><code>func f() (r int) {
+    defer func(r int) {
+        r = r + 5
+    }(r)
+    return 1
+}
+</code></pre>
+<p>请先不要向下看，在心里跑一遍结果，然后去验证<br/>
+<strong>1的正确答案不是0，2的正确答案不是10，3的正确答案不是6</strong><br/>
+为什么呢，最重要的一点就是要明白，<strong>return xxx这一条语句并不是一条原子指令</strong><br/>
+含有defer表达式的函数返回的过程是这样的：先给返回值赋值，然后调用defer表达式，最后才是返回到调用函数中，可以用一个简单的转换规则将return xxx改写成</p>
+<pre><code>返回值 = xxx
+调用defer函数
+空的return
+</code></pre>
+<p>例1，它可以改写成这样</p>
+<pre><code class="go">func f() (result int) {
+    //return语句不是一条原子调用，return xxx其实是赋值＋ret指令
+    result = 0
+    //defer被插入到return之前执行，也就是赋返回值和ret指令之间
+    func() {
+        result++
+    }()
+    return
+}
+</code></pre>
+<p>所以这个返回值是1<br/>
+例2，它可以改写成这样</p>
+<pre><code class="go">func f() (r int) {
+    t := 5
+    //赋值指令
+    r = t
+    //defer被插入到赋值与返回之间执行，这个例子中返回值r没被修改过
+    func() {
+        t = t + 5
+    }
+    return
+}
+</code></pre>
+<p>所以这个的结果是5<br/>
+例3，它可以改写成这样</p>
+<pre><code class="go">func f() (r int) {
+    //给返回值赋值
+    r = 1
+    //这里改的r是传值传进去的r(func里边的r是作用域不同的重名变量)，不会改变要返回的那个r值
+    func(r int) {
+        r = r + 5
+    }(r)
+    return
+}
+</code></pre>
+<p>所以这个例子的结果是1<br/>
+defer被插入到了赋值与ret之间，因此可能有机会改变最终的返回值</p>
+<h6>defer函数的参数值，是在申明defer时确定下来的</h6>
+<p>在defer函数申明时，对外部变量的引用是有两种方式：作为函数参数和作为闭包引用<br/>
+作为函数参数，在defer申明时就把值传递给defer，并将值缓存起来，调用defer的时候使用缓存的值进行计算<br/>
+作为闭包引用，在defer函数执行时根据整个上下文确定当前的值<br/>
+看个🌰</p>
+<pre><code class="go">func main() {
+    i := 0
+    defer fmt.Println(&#34;a:&#34;, i)
+    //闭包调用，将外部i传到闭包中进行计算
+    defer func(j int) {
+        fmt.Println(&#34;b:&#34;, j)
+    }(i)
+    //闭包调用，捕获同作用域下的i进行计算
+    defer func() {
+        fmt.Println(&#34;c:&#34;, i)
+    }()
+    i++
+}
+</code></pre>
+<p>结果：</p>
+<pre><code>c: 1
+b: 0
+a: 0
+</code></pre>
+<p>说明地址：<a href="https://www.jianshu.com/p/63e3d57f285f" target="_blank">https://www.jianshu.com/p/63e3d57f285f</a></p>
+<h3>panic和recover</h3>
+<pre><code class="go">func panic(v interface{})
+</code></pre>
+<blockquote>
+<p>中英文说明<br/>
+The panic built-in function stops normal execution of the current goroutine.When a function F calls panic, normal execution of F stops immediately.Any functions whose execution was deferred by F are run in the usual way, and then F returns to its caller. To the caller G, the invocation of F then behaves like a call to panic,terminating G&#39;s execution and running any deferred functions.This continues until all functions in the executing goroutine have stopped,in reverse order. At that point, the program is terminated and the error condition is reported,including the value of the argument to panic. This termination sequence is called panicking and can be controlled by the built-in function recover.<br/>
+panic内置函数停止当前goroutine的正常执行，当函数F调用panic时，函数F的正常执行被立即停止，然后运行所有在F函数中的defer函数，然后F返回到调用他的函数对于调用者G，F函数的行为就像panic一样，终止G的执行并运行G中所defer函数，此过程会一直继续执行到goroutine所有的函数。panic可以通过内置的recover来捕获。</p>
+</blockquote>
+<pre><code class="go">func recover() interface{}
+</code></pre>
+<blockquote>
+<p>中英文说明<br/>
+The recover built-in function allows a program to manage behavior of a panicking goroutine. Executing a call to recover inside a deferred function (but not any function called by it) stops the panicking sequence by restoring normal execution and retrieves the error value passed to the call of panic. If recover is called outside the deferred function it will not stop a panicking sequence. In this case, or when the goroutine is not panicking, or if the argument supplied to panic was nil, recover returns nil. Thus the return value from recover reports whether the goroutine is panicking.<br/>
+recover内置函数用来管理含有panic行为的goroutine，recover运行在defer函数中，获取panic抛出的错误值，并将程序恢复成正常执行的状态。如果在defer函数之外调用recover，那么recover不会停止并且捕获panic错误如果goroutine中没有panic或者捕获的panic的值为nil，recover的返回值也是nil。由此可见，recover的返回值表示当前goroutine是否有panic行为</p>
+</blockquote>
+<p>这里有几个需要注意的问题，通过🌰表现</p>
+<h6>defer 表达式的函数如果定义在 panic 后面，该函数在 panic 后就无法被执行到</h6>
+<p>在defer前panic</p>
+<pre><code class="go">func main() {
+    panic(&#34;a&#34;)
+    defer func() {
+        fmt.Println(&#34;b&#34;)
+    }()
+}
+</code></pre>
+<p>b没有被打印出来，结果：</p>
+<pre><code>panic: a
+
+goroutine 1 [running]:
+main.main()
+    /xxxxx/src/xxx.go:50 +0x39
+exit status 2
+</code></pre>
+<p>在defer后panic</p>
+<pre><code class="go">func main() {
+    defer func() {
+        fmt.Println(&#34;b&#34;)
+    }()
+    panic(&#34;a&#34;)
+}
+</code></pre>
+<p>b被正常打印，结果：</p>
+<pre><code>b
+panic: a
+
+goroutine 1 [running]:
+main.main()
+    /xxxxx/src/xxx.go:50 +0x39
+exit status 2
+</code></pre>
+<h6>F中出现panic时，F函数会立刻终止，不会执行F函数中后面的内容，但不会立刻返回，而调用F的defer，如果F的defer中有recover捕获，则F在执行完defer后正常返回，调用函数F的函数G继续正常执行</h6>
+<pre><code class="go">func G() {
+    defer func() {
+        fmt.Println(&#34;c&#34;)
+    }()
+    F()
+    fmt.Println(&#34;继续执行&#34;)
+}
+
+func F() {
+    defer func() {
+        if err := recover(); err != nil {
+            fmt.Println(&#34;捕获异常:&#34;, err)
+        }
+        fmt.Println(&#34;b&#34;)
+    }()
+    panic(&#34;a&#34;)
+}
+</code></pre>
+<p>结果：</p>
+<pre><code>捕获异常: a
+b
+继续执行
+c
+</code></pre>
+<h6>如果F的defer中无recover捕获，则将panic抛到G中，G函数会立刻终止，不会执行G函数中后面的内容，但不会立刻返回，而调用G的defer...以此类推</h6>
+<pre><code class="go">func G() {
+    defer func() {
+        if err := recover(); err != nil {
+            fmt.Println(&#34;捕获异常:&#34;, err)
+        }
+        fmt.Println(&#34;c&#34;)
+    }()
+    F()
+    fmt.Println(&#34;继续执行&#34;)
+}
+
+func F() {
+    defer func() {
+        fmt.Println(&#34;b&#34;)
+    }()
+    panic(&#34;a&#34;)
+}
+</code></pre>
+<p>结果：</p>
+<pre><code>b
+捕获异常: a
+c
+</code></pre>
+<h6>如果一直没有recover，抛出的panic到当前goroutine最上层函数时，程序直接异常终止</h6>
+<pre><code class="go">func G() {
+    defer func() {
+        fmt.Println(&#34;c&#34;)
+    }()
+    F()
+    fmt.Println(&#34;继续执行&#34;)
+}
+
+func F() {
+    defer func() {
+        fmt.Println(&#34;b&#34;)
+    }()
+    panic(&#34;a&#34;)
+}
+</code></pre>
+<p>结果：</p>
+<pre><code>b
+c
+panic: a
+
+goroutine 1 [running]:
+main.F()
+    /xxxxx/src/xxx.go:61 +0x55
+main.G()
+    /xxxxx/src/xxx.go:53 +0x42
+exit status 2
+</code></pre>
+<h6>recover都是在<code>当前的goroutine</code>里进行捕获的，这就是说，对于创建goroutine的外层函数，如果goroutine内部发生panic并且内部没有用recover，外层函数是无法用recover来捕获的，这样会造成程序崩溃</h6>
+<pre><code>func G() {
+    defer func() {
+        //goroutine外进行recover
+        if err := recover(); err != nil {
+            fmt.Println(&#34;捕获异常:&#34;, err)
+        }
+        fmt.Println(&#34;c&#34;)
+    }()
+    //创建goroutine调用F函数
+    go F()
+    time.Sleep(time.Second)
+}
+
+func F() {
+    defer func() {
+        fmt.Println(&#34;b&#34;)
+    }()
+    //goroutine内部抛出panic
+    panic(&#34;a&#34;)
+}
+</code></pre>
+<p>结果：</p>
+<pre><code>b
+panic: a
+
+goroutine 5 [running]:
+main.F()
+    /xxxxx/src/xxx.go:67 +0x55
+created by main.main
+    /xxxxx/src/xxx.go:58 +0x51
+exit status 2
+</code></pre>
+<h6>recover返回的是interface{}类型而不是go中的 error 类型，如果外层函数需要调用err.Error()，会编译错误，也可能会在执行时panic</h6>
+<pre><code>func main() {
+    defer func() {
+        if err := recover(); err != nil {
+            fmt.Println(&#34;捕获异常:&#34;, err.Error())
+        }
+    }()
+    panic(&#34;a&#34;)
+}
+</code></pre>
+<p>编译错误，结果：</p>
+<pre><code>err.Error undefined (type interface {} is interface with no methods)
+</code></pre>
+<pre><code>func main() {
+    defer func() {
+        if err := recover(); err != nil {
+            fmt.Println(&#34;捕获异常:&#34;, fmt.Errorf(&#34;%v&#34;, err).Error())
+        }
+    }()
+    panic(&#34;a&#34;)
+}
+</code></pre>
+<p>结果：</p>
+<pre><code>捕获异常: a
+</code></pre>
+<p>参考：<br/>
+https: //golang.org/pkg/builtin/#recover<br/>
+https: <a href="//www.w3cschool.cn/go_internals/go_internals-drq7282o.html" target="_blank" rel="nofollow">//www.w3cschool.cn/go_internals/go_internals-drq7282o.html</a></p>
+
+          </div>
+					</div>
+					
+
+					
+					<div class="row orig-info">
+						<p>本文来自：<a href="/wr?u=http://www.jianshu.com" target="_blank" title="简书">简书</a></p>
+						<p>感谢作者：smoke_zl</p>
+						<p>查看原文：<a href="/wr?u=https%3a%2f%2fwww.jianshu.com%2fp%2f63e3d57f285f" target="_blank" title="go中defer,panic,recover详解 go中的异常处理">go中defer,panic,recover详解 go中的异常处理</a></p>
+					</div>
+					
+				</div>
+				
+				<div class="content-buttons">
+					<div class="pull-right c9 f11" style="line-height: 12px; padding-top: 3px; text-shadow: 0px 1px 0px #fff;">79 次点击 &nbsp;</div>
+					<a class="tb collect" href="javascript:;" title="加入收藏" data-objid="15776" data-objtype="1" data-collect="">加入收藏</a> 
+					<a href="javascript:" onclick="window.open('http://service.weibo.com/share/share.php?url=https://studygolang.com/articles/15776&title='+encodeURIComponent('Go语言中文网 - go中defer,panic,recover详解 go中的异常处理 by smoke_zl #golang#'), '_blank', 'width=550,height=370');" class="tb">微博</a>
+					<div id="content-thank">
+						<a class="tb" href="javascript:;" title="赞" data-objid="15776" data-objtype="1" data-flag="">赞</a>
+					</div>
+				</div>
+			</div>
+			
+
+			<div class="sep20"></div>
+			<div class="box_white">
+				<div class="cell subject">
+					
+					<div class="item-list">
+					
+						<a class="add-collection" href="javascript:"><i class="fa fa-plus"></i> 收入我的专栏</a>
+					</div>
+				</div>
+			</div>
+
+			<div class="sep20"></div>
+			<div class="box_white">
+				<div class="cell row">
+					
+					<div class="col-sm-6">上一篇：<a href="/articles/15775">初识Go语言-1</a></div>
+					
+					
+					<div class="col-sm-6 right">下一篇：<a href="/articles/15777">GO语言面试系列:（二）常规性Golang面试题解析</a></div>
+					
+				</div>
+			</div>
+
+			<div class="sep20"></div>
+
+			
+			<div id="replies" class="box_white">
+				<div class="cell">
+					<div class="pull-right" style="margin: -3px -5px 0px 0px;">
+					
+						
+						
+						<a href="/tag/%e5%87%bd%e6%95%b0" class="tag"><li class="fa fa-tag"></li> 函数</a>
+						
+						<a href="/tag/goroutine" class="tag"><li class="fa fa-tag"></li> goroutine</a>
+						
+						<a href="/tag/%e8%bf%94%e5%9b%9e%e5%80%bc" class="tag"><li class="fa fa-tag"></li> 返回值</a>
+						
+						<a href="/tag/%e6%8a%9b%e5%87%ba" class="tag"><li class="fa fa-tag"></li> 抛出</a>
+						
+					
+					</div>
+					<span class="c9"><span class="cmtnum">1</span> 回复 &nbsp;<strong class="snow">|</strong> &nbsp;直到 2018-10-25 11:59:01</span>
+				</div>
+				<div class="comment-list cell" data-objid="15776" data-objtype="1" >
+					<div class="words hide"><div class="text-center">暂无回复</div></div>
+				</div>
+			</div>
+
+			
+			
+<div class="sep10"></div>
+<div class="box_white page-comment">
+	<input type="hidden" name="me-uid" value="0"/>
+	<div class="cell">添加一条新回复
+	
+	<span class="h2-tip">
+	（您需要 <a class="c-log" href="javascript:openPop('#login-pop');">登录</a> 后才能回复 <a href="/user/register" class="c-reg"> 没有账号</a> ？）</span>
+	
+	</div>
+	<div class="cell">
+		<div class="row clearfix md-toolbar">
+			<ul class="col-md-10 list-inline comment-tab-menu" data-comment-group="default">
+				<li class="comment-edit-tab cur"><a href="#" class="op">编辑</a></li>
+				<li class="comment-preview-tab"><a href="#" class="op">预览</a></li>
+				<li>
+					<div class="nav reply-to dn" data-floor="" data-username="">
+						<i class="fa fa-mail-reply" title=""></i>
+						<a href="#reply" class="user" title=""></a>
+						<a href="#" class="close"><i class="fa fa-close"></i></a>
+					</div>
+				</li>
+			</ul>
+			<div class="col-md-2 text-right">
+				<i id="upload-img" class="glyphicon glyphicon-picture upload-img tool-tip" data-toggle="tooltip" data-placement="top" title="上传图片"></i>
+			</div>
+		</div>
+		<div class="submit" id="commentForm">
+			<div class="comment-content-text" data-comment-group="default">
+				<textarea id="comment-content" name="content" class="comment-textarea main-textarea need-autogrow" rows="8"></textarea>
+			</div>
+			<div class="comment-content-preview cell" data-comment-group="default"></div>
+			<div class="sub row">
+				<ul class="help-block col-md-10">
+					<li>请尽量让自己的回复能够对别人有帮助</li>
+					<li class="markdown_tip">支持 Markdown 格式, <strong>**粗体**</strong>、~~删除线~~、<code>`单行代码`</code></li>
+					<li>支持 @ 本站用户；支持表情（输入 : 提示），见 <a href="http://www.emoji-cheat-sheet.com/" target="_blank">Emoji cheat sheet</a></li>
+					<li>图片支持拖拽、截图粘贴等方式上传</li>
+				</ul>
+				<div class="col-md-2 text-right"><button id="comment-submit" type="submit" title="提交" class="btn btn-default">提交</button></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<style type="text/css">
+#replies { margin-bottom: 15px; }
+#replies .reply {
+	margin: 0 -15px;
+	padding: 15px 15px;
+	position: relative;
+	border-bottom: 1px solid #eee;
+	padding-left: 74px;
+}
+#replies .reply .avatar {
+	position: absolute;
+	top: 15px;
+	left: 15px;
+}
+.avatar-48 {
+	width: 48px;
+	height: 48px;
+	border-radius: 120px;
+}
+.media-object {
+	display: block;
+}
+.avatar-16 {
+	width: 16px;
+	height: 16px;
+	border-radius: 120px;
+}
+#replies .reply .reply-to-block .info .media-object {
+	display: inline-block;
+	margin-right: 5px;
+	vertical-align: top;
+}
+#replies .reply .reply-to-block .info {
+	margin: 0;
+}
+#replies .reply .reply-to-block .info .user-name {
+	font-weight: bold;
+}
+#replies .reply .reply-to-block {
+	padding: 8px 15px;
+	background: #f7f7f7;
+	border-radius: 3px;
+	margin-bottom: 10px;
+}
+.avatar .uface, .avatar .media-object {
+	border-radius: 120px;
+}
+#replies .reply .infos {
+	min-height: 48px;
+}
+#replies .reply .info {
+	color: #999;
+	margin-bottom: 6px;
+	font-size: 12px;
+}
+#replies .reply .info .name {
+	font-weight: bold;
+	font-size: 13px;
+}
+#replies .reply .info .name a {
+	color: #555;
+}
+#replies .reply .info .floor {
+	color: #7AA87A;
+}
+#replies .reply .info a.time {
+	color: #999;
+	border-bottom: 1px dashed #ccc;
+	text-decoration: none !important;
+	cursor: pointer;
+}
+abbr[title] {
+	border-bottom: 0px;
+	cursor: pointer;
+}
+.opts {
+	color: #666;
+}
+@media (min-width: 1026px) {
+	#replies .reply .hideable {
+		display: none;
+	}
+}
+#replies .reply .opts a {
+	display: inline-block;
+	vertical-align: baseline;
+	line-height: 22px;
+	padding: 2px 5px;
+	height: 22px;
+	min-width: 22px;
+	text-align: center;
+}
+#replies .info .opts a {
+	font-size: 13px;
+	margin-left: 5px;
+	color: #999;
+}
+#replies .info .opts a.edit {
+	display: none;
+}
+.markdown {
+	position: relative;
+	letter-spacing: .03em;
+	font-size: 15px;
+	text-overflow: ellipsis;
+	word-wrap: break-word;
+}
+.markdown img.twemoji {
+	width: 20px;
+}
+.markdown img {
+	vertical-align: top;
+	max-width: 100%;
+}
+.markdown p {
+	font-size: 14px;
+	line-height: 26px;
+	margin-bottom: 0;
+	color: #000;
+}
+.md-toolbar .reply-to {
+    padding-top: 3px;
+    padding-left: 8px;
+}
+.close {
+    float: right;
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    filter: alpha(opacity=20);
+    opacity: .2;
+}
+a.close:hover {
+	background-color: #d0d0d0;
+    color: #666
+}
+.md-toolbar .reply-to .close {
+    font-size: 14px;
+    margin-left: 5px;
+    margin-top: 1px;
+}
+.edit-wrapper {
+	display: none;
+	border: 1px solid #c0d3eb;
+	padding: 8px;
+	border-radius: 4px;
+}
+
+.edit-textarea {
+	resize: none;
+	width: 100%;
+	color: #000;
+	font-size: 14px;
+	border: 1px solid #E5E5E5;
+	padding: 5px;
+}
+.btn-edit {
+	cursor: pointer;
+}
+
+
+</style>
+
+<script type="text/x-jsrender" id="one-comment">
+<div class="reply [%if is_new%]light[%/if%]" id="reply-[%:comment.floor%]">
+	<div data-floor="[%:comment.floor%]">
+		<div class="avatar"><a title="[%:user.username%]" href="/user/[%:user.username%]"><img class="media-object avatar-48" src="[%:user.avatar%]" alt="[%:user.username%]"></a></div>
+			<div class="infos">
+				<div class="info">
+					<span class="name">
+						<a class="user-name" data-name="[%:user.name%]" href="/user/[%:user.username%]">[%:user.username%]</a>
+					</span> ·
+					<span class="floor">#[%:comment.floor%]</span> ·
+					<abbr class="timeago" title="[%:comment.ctime%]">[%:comment.cmt_time%]</abbr>
+					<span class="opts pull-right">
+						<span class="op-reply hideable">
+							[%if me.uid == user.uid %]
+								<a data-floor="[%:comment.floor%]" title="编辑" class="btn-edit glyphicon glyphicon-edit"></a>
+							[%/if%]
+						  <a data-floor="[%:comment.floor%]" data-username="[%:user.username%]" title="回复此楼" class="btn-reply fa fa-mail-reply" href="#"></a>
+						</span>
+						
+					</span>
+				</div>
+				[%if comment.reply_floor > 0%]
+				<div class="reply-to-block">
+					<div class="info reply_user">
+						对
+						<a data-remote="true" href="/user/[%:comment.reply_user.username%]">
+							<img class="media-object avatar-16" src="[%:comment.reply_user.avatar%]" alt="[%:comment.reply_user.username%]"><span class="user-name">[%:comment.reply_user.username%]</span>
+						</a>
+						<a href="#reply-[%:comment.reply_floor%]"><span class="reply-floor">#[%:comment.reply_floor%]</span></a> 回复
+					</div>
+					<div class="markdown dn">
+						<p>[%:comment.reply_content%]</p>
+					</div>
+				</div>
+				[%/if%]
+
+			<div class="markdown" data-floor="[%:comment.floor%]">
+				<div class="content">[%:comment.content%]</div>
+				<div class="edit-wrapper">
+					<div class="row clearfix md-toolbar">
+						<ul class="col-md-10 list-inline comment-tab-menu" data-comment-group="[%:comment.floor%]">
+								<li class="comment-edit-tab cur"><a href="#" class="op">编辑</a></li>
+								<li class="comment-preview-tab"><a href="#" class="op">预览</a></li>
+						</ul>
+						<div class="col-md-2 text-right">
+							<i data-floor="[%:comment.floor%]" class="glyphicon glyphicon-picture upload-img tool-tip" data-toggle="tooltip" data-placement="top" title="上传图片"></i>
+						</div>
+					</div>
+					<div class="comment-content-text" data-comment-group="[%:comment.floor%]">
+						<textarea data-raw-content="[%:comment.rawContent%]" name="content" class="comment-textarea" rows="8" style="width: 100%;">[%:comment.rawContent%]</textarea>
+					</div>
+					<div class="comment-content-preview cell" data-comment-group="[%:comment.floor%]"></div>
+					<div class="text-right">
+						<button type="submit" title="提交" data-cid="[%:comment.cid%]" data-floor="[%:comment.floor%]" class="submit btn btn-default">提交</button>
+						<button title="取消" data-floor="[%:comment.floor%]" class="cancel btn btn-default">取消</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</script>
+
+
+			
+
+			
+		</div>
+	</div>
+	<div class="col-md-3 col-sm-6">
+		<div class="sep20"></div>
+		<div class="box_white sidebar">
+	
+	<div class="top">
+		<h3 class="title"><i class="glyphicon glyphicon-user"></i> 用户登录</h3>
+	</div>
+	<div class="sb-content inner_content" style="padding-bottom: 0;">
+		<form action="/account/login" method="post" class="form-horizontal login" role="form" style="padding-top: 0; padding-bottom: 0;">
+			<div class="form-group">
+				<div class="col-sm-10">
+					<input type="text" class="form-control input-sm" id="username" name="username" placeholder="请填写用户名或邮箱">
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="col-sm-10">
+					<input type="password" class="form-control input-sm" id="passwd" name="passwd" placeholder="请填写密码">
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="col-sm-10">
+					<div class="checkbox">
+						<label>
+							<input id="user_remember_me" name="remember_me" type="checkbox" value="1" checked="checked" />	记住登录状态
+						</label>
+						<input class="btn btn-default btn-sm" data-disable-with="正在登录" name="commit" type="submit" value="登录" />
+					</div>
+					<div class="sep10"></div>
+					<a href="/oauth/github/login" class="btn btn-default btn-sm">
+						<i class="fa fa-github" aria-hidden="true"></i>
+						GitHub 登录
+					</a>
+				</div>
+			</div>
+		</form>
+	</div>
+	
+</div>
+
+
+
+
+
+		
+		<div class="box_white sidebar" id="ad-right1">
+			
+				<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-format="autorelaxed"
+     data-ad-client="ca-pub-4512014793067058"
+     data-ad-slot="4230018468"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+			
+		</div>
+		
+
+		<div class="box_white sidebar">
+	<div class="top">
+		<h3 class="title"><i class="glyphicon glyphicon-stats"></i>&nbsp;今日阅读排行</h3>
+	</div>
+	<div class="sb-content">
+		<div class="rank-list" data-objtype="1" data-limit="10" data-rank_type="today">
+			<ul class="list-unstyled">
+				<img src="/static/img/loaders/loader7.gif" alt="加载中" />
+			</ul>
+		</div>
+	</div>
+</div>
+		
+		
+		<div class="box_white sidebar" id="ad-right2">
+			
+				<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- 侧边栏自适应 -->
+<ins class="adsbygoogle"
+     style="display:inline-block;min-width:270px;max-width:970px;width:100%;height:290px"
+     data-ad-client="ca-pub-4512014793067058"
+     data-ad-slot="3487838313"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+			
+		</div>
+		
+
+		<div class="box_white sidebar">
+	<div class="top">
+		<h3 class="title"><i class="glyphicon glyphicon-stats"></i>&nbsp;一周阅读排行</h3>
+	</div>
+	<div class="sb-content">
+		<div class="rank-list" data-objtype="1" data-limit="10" data-rank_type="week">
+			<ul class="list-unstyled">
+				<img src="/static/img/loaders/loader7.gif" alt="加载中" />
+			</ul>
+		</div>
+	</div>
+</div>
+		
+	</div>
+</div>
+
+<link rel="stylesheet" href="https://static.studygolang.com/static/dist/css/modal.min.css?v=0.1">
+<div class="modal contribute-modal animated" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close">×</button>
+                <h4 class="modal-title">
+                    给该专栏投稿
+                    <a href="/articles/new" class="new-note-btn">写篇新文章</a>
+                </h4>
+                <span class="notice">每篇文章有总共有 5 次投稿机会</span>
+                <div>
+                    <input type="text" placeholder="搜索我的文章" class="search-input">
+                    <a class="search-btn">
+                        <i class="fa fa-search" aria-hidden="true" style="margin: 8px -1px 0 0;display: block;"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="modal-body">
+                <ul id="contribute-note-list"></ul>
+                <div class="modal-notes-placeholder" style="display: none;">
+                    <div class="text"></div>
+                    <div class="btn"></div>
+                </div>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal animated add-self" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" data-dismiss="modal" class="close">×</button>
+                <h4 class="modal-title">收入到我管理的专栏
+                    <span class="new-collection-btn"><a href="/subject/new" target="_blank">新建专栏</a></span>
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="search">
+                    <input type="search" name="search-self" placeholder="搜索我管理的专栏">
+                    <a class="search-btn">
+                        <i class="fa fa-search" aria-hidden="true" style="margin: 6px 1px 0 0;display: block;"></i>
+                    </a>
+                </div>
+                <ul id="self-note-list"></ul>
+                <div class="modal-collections-placeholder" style="display: none;">
+                    <div class="avatar"></div>
+                    <div class="wrap">
+                        <div class="btn"></div>
+                        <div class="name"></div>
+                        <div class="text"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
+
+
+
+<template id="content_tpl">
+<div class="show-content-free">
+            <p>golang中defer,panic,recover是很常用的三个特性，三者一起使用可以充当其他语言中try…catch…的角色，而defer本身又像其他语言的析构函数</p>
+<h3>defer</h3>
+<h6>在函数返回之前调用，用于资源释放、打印日志、异常捕获等</h6>
+<pre><code class="go">f, err := os.Open(filename)
+if err != nil {
+    return err
+}
+/**
+ * 这里defer要写在err判断的后边而不是os.Open后边
+ * 如果资源没有获取成功，就没有必要对资源执行释放操作
+ * 如果err不为nil而执行资源执行释放操作，有可能导致panic
+ */
+defer f.Close()
+</code></pre>
+<h6>如果有多个defer表达式，调用顺序类似于栈，越后面的defer表达式越先被调用(后进先出)</h6>
+<pre><code class="go">func main() {
+    defer fmt.Println(1)
+    defer fmt.Println(2)
+    defer fmt.Println(3)
+    defer fmt.Println(4)
+}
+</code></pre>
+<p>结果：</p>
+<pre><code>4
+3
+2
+1
+</code></pre>
+<h6>如果含有 defer 表达式的函数有返回值，defer 表达式可能会在设置函数返回值之后，在返回到调用函数之前修改返回值，使最终的函数返回值与你想象的不一致，这里很容易踩坑，来几个🌰</h6>
+<p>例1</p>
+<pre><code class="go">func f() (result int) {
+    defer func() {
+        result++
+    }()
+    return 0
+}
+</code></pre>
+<p>例2</p>
+<pre><code>func f() (r int) {
+    t := 5
+    defer func() {
+        t = t + 5
+    }()
+    return t
+}
+</code></pre>
+<p>例3</p>
+<pre><code>func f() (r int) {
+    defer func(r int) {
+        r = r + 5
+    }(r)
+    return 1
+}
+</code></pre>
+<p>请先不要向下看，在心里跑一遍结果，然后去验证<br/>
+<strong>1的正确答案不是0，2的正确答案不是10，3的正确答案不是6</strong><br/>
+为什么呢，最重要的一点就是要明白，<strong>return xxx这一条语句并不是一条原子指令</strong><br/>
+含有defer表达式的函数返回的过程是这样的：先给返回值赋值，然后调用defer表达式，最后才是返回到调用函数中，可以用一个简单的转换规则将return xxx改写成</p>
+<pre><code>返回值 = xxx
+调用defer函数
+空的return
+</code></pre>
+<p>例1，它可以改写成这样</p>
+<pre><code class="go">func f() (result int) {
+    //return语句不是一条原子调用，return xxx其实是赋值＋ret指令
+    result = 0
+    //defer被插入到return之前执行，也就是赋返回值和ret指令之间
+    func() {
+        result++
+    }()
+    return
+}
+</code></pre>
+<p>所以这个返回值是1<br/>
+例2，它可以改写成这样</p>
+<pre><code class="go">func f() (r int) {
+    t := 5
+    //赋值指令
+    r = t
+    //defer被插入到赋值与返回之间执行，这个例子中返回值r没被修改过
+    func() {
+        t = t + 5
+    }
+    return
+}
+</code></pre>
+<p>所以这个的结果是5<br/>
+例3，它可以改写成这样</p>
+<pre><code class="go">func f() (r int) {
+    //给返回值赋值
+    r = 1
+    //这里改的r是传值传进去的r(func里边的r是作用域不同的重名变量)，不会改变要返回的那个r值
+    func(r int) {
+        r = r + 5
+    }(r)
+    return
+}
+</code></pre>
+<p>所以这个例子的结果是1<br/>
+defer被插入到了赋值与ret之间，因此可能有机会改变最终的返回值</p>
+<h6>defer函数的参数值，是在申明defer时确定下来的</h6>
+<p>在defer函数申明时，对外部变量的引用是有两种方式：作为函数参数和作为闭包引用<br/>
+作为函数参数，在defer申明时就把值传递给defer，并将值缓存起来，调用defer的时候使用缓存的值进行计算<br/>
+作为闭包引用，在defer函数执行时根据整个上下文确定当前的值<br/>
+看个🌰</p>
+<pre><code class="go">func main() {
+    i := 0
+    defer fmt.Println(&#34;a:&#34;, i)
+    //闭包调用，将外部i传到闭包中进行计算
+    defer func(j int) {
+        fmt.Println(&#34;b:&#34;, j)
+    }(i)
+    //闭包调用，捕获同作用域下的i进行计算
+    defer func() {
+        fmt.Println(&#34;c:&#34;, i)
+    }()
+    i++
+}
+</code></pre>
+<p>结果：</p>
+<pre><code>c: 1
+b: 0
+a: 0
+</code></pre>
+<p>说明地址：<a href="https://www.jianshu.com/p/63e3d57f285f" target="_blank">https://www.jianshu.com/p/63e3d57f285f</a></p>
+<h3>panic和recover</h3>
+<pre><code class="go">func panic(v interface{})
+</code></pre>
+<blockquote>
+<p>中英文说明<br/>
+The panic built-in function stops normal execution of the current goroutine.When a function F calls panic, normal execution of F stops immediately.Any functions whose execution was deferred by F are run in the usual way, and then F returns to its caller. To the caller G, the invocation of F then behaves like a call to panic,terminating G&#39;s execution and running any deferred functions.This continues until all functions in the executing goroutine have stopped,in reverse order. At that point, the program is terminated and the error condition is reported,including the value of the argument to panic. This termination sequence is called panicking and can be controlled by the built-in function recover.<br/>
+panic内置函数停止当前goroutine的正常执行，当函数F调用panic时，函数F的正常执行被立即停止，然后运行所有在F函数中的defer函数，然后F返回到调用他的函数对于调用者G，F函数的行为就像panic一样，终止G的执行并运行G中所defer函数，此过程会一直继续执行到goroutine所有的函数。panic可以通过内置的recover来捕获。</p>
+</blockquote>
+<pre><code class="go">func recover() interface{}
+</code></pre>
+<blockquote>
+<p>中英文说明<br/>
+The recover built-in function allows a program to manage behavior of a panicking goroutine. Executing a call to recover inside a deferred function (but not any function called by it) stops the panicking sequence by restoring normal execution and retrieves the error value passed to the call of panic. If recover is called outside the deferred function it will not stop a panicking sequence. In this case, or when the goroutine is not panicking, or if the argument supplied to panic was nil, recover returns nil. Thus the return value from recover reports whether the goroutine is panicking.<br/>
+recover内置函数用来管理含有panic行为的goroutine，recover运行在defer函数中，获取panic抛出的错误值，并将程序恢复成正常执行的状态。如果在defer函数之外调用recover，那么recover不会停止并且捕获panic错误如果goroutine中没有panic或者捕获的panic的值为nil，recover的返回值也是nil。由此可见，recover的返回值表示当前goroutine是否有panic行为</p>
+</blockquote>
+<p>这里有几个需要注意的问题，通过🌰表现</p>
+<h6>defer 表达式的函数如果定义在 panic 后面，该函数在 panic 后就无法被执行到</h6>
+<p>在defer前panic</p>
+<pre><code class="go">func main() {
+    panic(&#34;a&#34;)
+    defer func() {
+        fmt.Println(&#34;b&#34;)
+    }()
+}
+</code></pre>
+<p>b没有被打印出来，结果：</p>
+<pre><code>panic: a
+
+goroutine 1 [running]:
+main.main()
+    /xxxxx/src/xxx.go:50 +0x39
+exit status 2
+</code></pre>
+<p>在defer后panic</p>
+<pre><code class="go">func main() {
+    defer func() {
+        fmt.Println(&#34;b&#34;)
+    }()
+    panic(&#34;a&#34;)
+}
+</code></pre>
+<p>b被正常打印，结果：</p>
+<pre><code>b
+panic: a
+
+goroutine 1 [running]:
+main.main()
+    /xxxxx/src/xxx.go:50 +0x39
+exit status 2
+</code></pre>
+<h6>F中出现panic时，F函数会立刻终止，不会执行F函数中后面的内容，但不会立刻返回，而调用F的defer，如果F的defer中有recover捕获，则F在执行完defer后正常返回，调用函数F的函数G继续正常执行</h6>
+<pre><code class="go">func G() {
+    defer func() {
+        fmt.Println(&#34;c&#34;)
+    }()
+    F()
+    fmt.Println(&#34;继续执行&#34;)
+}
+
+func F() {
+    defer func() {
+        if err := recover(); err != nil {
+            fmt.Println(&#34;捕获异常:&#34;, err)
+        }
+        fmt.Println(&#34;b&#34;)
+    }()
+    panic(&#34;a&#34;)
+}
+</code></pre>
+<p>结果：</p>
+<pre><code>捕获异常: a
+b
+继续执行
+c
+</code></pre>
+<h6>如果F的defer中无recover捕获，则将panic抛到G中，G函数会立刻终止，不会执行G函数中后面的内容，但不会立刻返回，而调用G的defer...以此类推</h6>
+<pre><code class="go">func G() {
+    defer func() {
+        if err := recover(); err != nil {
+            fmt.Println(&#34;捕获异常:&#34;, err)
+        }
+        fmt.Println(&#34;c&#34;)
+    }()
+    F()
+    fmt.Println(&#34;继续执行&#34;)
+}
+
+func F() {
+    defer func() {
+        fmt.Println(&#34;b&#34;)
+    }()
+    panic(&#34;a&#34;)
+}
+</code></pre>
+<p>结果：</p>
+<pre><code>b
+捕获异常: a
+c
+</code></pre>
+<h6>如果一直没有recover，抛出的panic到当前goroutine最上层函数时，程序直接异常终止</h6>
+<pre><code class="go">func G() {
+    defer func() {
+        fmt.Println(&#34;c&#34;)
+    }()
+    F()
+    fmt.Println(&#34;继续执行&#34;)
+}
+
+func F() {
+    defer func() {
+        fmt.Println(&#34;b&#34;)
+    }()
+    panic(&#34;a&#34;)
+}
+</code></pre>
+<p>结果：</p>
+<pre><code>b
+c
+panic: a
+
+goroutine 1 [running]:
+main.F()
+    /xxxxx/src/xxx.go:61 +0x55
+main.G()
+    /xxxxx/src/xxx.go:53 +0x42
+exit status 2
+</code></pre>
+<h6>recover都是在<code>当前的goroutine</code>里进行捕获的，这就是说，对于创建goroutine的外层函数，如果goroutine内部发生panic并且内部没有用recover，外层函数是无法用recover来捕获的，这样会造成程序崩溃</h6>
+<pre><code>func G() {
+    defer func() {
+        //goroutine外进行recover
+        if err := recover(); err != nil {
+            fmt.Println(&#34;捕获异常:&#34;, err)
+        }
+        fmt.Println(&#34;c&#34;)
+    }()
+    //创建goroutine调用F函数
+    go F()
+    time.Sleep(time.Second)
+}
+
+func F() {
+    defer func() {
+        fmt.Println(&#34;b&#34;)
+    }()
+    //goroutine内部抛出panic
+    panic(&#34;a&#34;)
+}
+</code></pre>
+<p>结果：</p>
+<pre><code>b
+panic: a
+
+goroutine 5 [running]:
+main.F()
+    /xxxxx/src/xxx.go:67 +0x55
+created by main.main
+    /xxxxx/src/xxx.go:58 +0x51
+exit status 2
+</code></pre>
+<h6>recover返回的是interface{}类型而不是go中的 error 类型，如果外层函数需要调用err.Error()，会编译错误，也可能会在执行时panic</h6>
+<pre><code>func main() {
+    defer func() {
+        if err := recover(); err != nil {
+            fmt.Println(&#34;捕获异常:&#34;, err.Error())
+        }
+    }()
+    panic(&#34;a&#34;)
+}
+</code></pre>
+<p>编译错误，结果：</p>
+<pre><code>err.Error undefined (type interface {} is interface with no methods)
+</code></pre>
+<pre><code>func main() {
+    defer func() {
+        if err := recover(); err != nil {
+            fmt.Println(&#34;捕获异常:&#34;, fmt.Errorf(&#34;%v&#34;, err).Error())
+        }
+    }()
+    panic(&#34;a&#34;)
+}
+</code></pre>
+<p>结果：</p>
+<pre><code>捕获异常: a
+</code></pre>
+<p>参考：<br/>
+https: //golang.org/pkg/builtin/#recover<br/>
+https: <a href="//www.w3cschool.cn/go_internals/go_internals-drq7282o.html" target="_blank" rel="nofollow">//www.w3cschool.cn/go_internals/go_internals-drq7282o.html</a></p>
+
+          </div>
+</template>
+
+
+
+		</div>
+	</div>
+	<div class="sep10"></div>
+	<footer id="bottom">
+		<div class="container nav-content">
+			<div class="inner_content">
+				<div class="sep10"></div>   
+				<strong>
+					
+					<a href="/wiki/about" class="dark">关于</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/wiki/faq" class="dark">FAQ</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/wiki/contributors" class="dark">贡献者</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/go/feedback" class="dark">反馈</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="https://github.com/studygolang" class="dark">Github</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="http://weibo.com/studygolang" class="dark">新浪微博</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="https://play.studygolang.com" class="dark">Play</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/wiki/duty" class="dark">免责声明</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/wiki/contact" class="dark">联系我们</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/wiki/donate" class="dark">捐赠</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/wiki/cool" class="dark">酷站</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/feed.html" class="dark">Feed订阅</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<span id="onlineusers">1502</span> 人在线
+				</strong>
+				&nbsp;<span class="cc">最高记录 <span id="maxonline">2928</span></span>
+				<div class="sep20"></div>
+				&copy;2013-2018 studygolang.com Go语言中文网，中国 Golang 社区，致力于构建完善的 Golang 中文社区，Go语言爱好者的学习家园。
+				<div class="sep5"></div>
+				Powered by <a href="https://github.com/studygolang/studygolang">StudyGolang(Golang + MySQL)</a> &nbsp;<span class="snow">•</span>&nbsp;<span class="snow">·</span>&nbsp;CDN 采用 <a href="https://portal.qiniu.com/signup?code=3lfz4at7pxfma" title="七牛云" class="dark" target="_blank">七牛云</a>
+				<div class="sep20"></div>
+				<span class="small cc">VERSION: V3.5.0&nbsp;<span class="snow">·</span>&nbsp;46.066802ms&nbsp;<span class="snow">·</span>&nbsp;<strong>为了更好的体验，本站推荐使用 Chrome 或 Firefox 浏览器</strong></span>
+				<div class="sep20"></div>
+				<span class="f12 c9"><a href="http://www.miibeian.gov.cn/" target="_blank" rel="nofollow">京ICP备14030343号-1</a></span>
+				<div class="sep10"></div>
+			</div>
+		</div>
+	</footer>
+
+	<div id="gotop"></div>
+
+	
+	<input type="hidden" id="is_login_status" value="0" />
+	<div class="pop login-pop" id="login-pop">
+		<div style="position: relative;"><span class="close" style="position: absolute; right: -15px; top: -15px; cursor: pointer; color: #000; font-size: 13px;">X</span></div>
+		<div class="login-form">
+			<div class="error text-center"></div>
+			<div class="text-center" style="margin-bottom: 5px;">登录和大家一起探讨吧</div>
+			<form action="#" method="post" class="form-horizontal" role="form">
+				<div class="form-group">
+					<label for="username" class="col-sm-3 control-label">用户名</label>
+					<div class="col-sm-9 form-input">
+						<input type="text" class="form-control" id="form_username" name="username" placeholder="请填写用户名或邮箱">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="passwd" class="col-sm-3 control-label">密码</label>
+					<div class="col-sm-9 form-input">
+						<input type="password" class="form-control" id="form_passwd" name="passwd" placeholder="密码">
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-sm-offset-2 col-sm-10">
+						<div class="checkbox">
+							<label>
+								<input id="user_remember_me" name="remember_me" type="checkbox" value="1" checked="checked" />	记住登录状态
+							</label>
+							<button type="submit" id="login-btn" class="btn btn-default btn-sm">登录</button>
+						</div>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-sm-offset-2 col-sm-10">
+						<a id="login-github" href="/oauth/github/login" class="btn btn-default btn-sm pull-left">
+							<i class="fa fa-github" aria-hidden="true"></i>
+							GitHub 登录
+						</a>
+						<div class="forget">
+							<a href="/account/forgetpwd" title="点击找回密码">忘记密码？</a>
+						</div>
+						<div class="register">
+							<span>还不是会员</span><a href="/account/register">现在注册</a>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+	<div id="sg-overlay"></div>
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="https://cdn.staticfile.org/jquery-timeago/1.6.1/jquery.timeago.min.js"></script>
+	<script src="https://cdn.staticfile.org/zoom.js/0.0.1/zoom.min.js"></script>
+	<script src="https://cdn.staticfile.org/marked/0.3.6/marked.min.js"></script>
+	<script src="https://cdn.staticfile.org/Caret.js/0.3.1/jquery.caret.min.js"></script>
+	<script src="https://cdn.staticfile.org/emojify.js/1.1.0/js/emojify.min.js"></script>
+
+	<script type="text/javascript">
+	var uid =  0 ;
+	var isHttps =  true ,
+		cdnDomain = "https:\/\/static.studygolang.com\/";
+	if (isHttps) {
+		var wsUrl = 'wss://studygolang.com/ws?uid='+uid;
+	} else {
+		var wsUrl = 'ws://studygolang.com/ws?uid='+uid;
+	}
+	var GLaunchTime =  1540036286 *1000;
+	</script>
+	<script src="https://cdn.staticfile.org/lscache/1.1.0/lscache.min.js"></script>
+	<script src="https://cdn.staticfile.org/jsrender/0.9.90/jsrender.min.js"></script>
+	<script src="https://cdn.staticfile.org/plupload/3.1.1/plupload.full.min.js"></script>
+	<script type="text/javascript">
+	$.views.settings.delimiters("[%", "%]");
+	
+	</script>
+
+	<script src="https://static.studygolang.com/static/dist/js/sg_libs.min.js"></script>
+	<script src="https://static.studygolang.com/static/dist/js/sg_base.min.js?v=0.4"></script>
+
+	
+
+<script type="text/javascript" src="https://static.studygolang.com/static/dist/js/articles.min.js"></script>
+
+<script type="text/javascript">
+
+SG.SIDE_BARS = [
+	"/rank/view",
+];
+
+var keyprefix = 'article';
+var objid =  15776 ;
+
+$(function(){
+	
+	
+	
+	$('.need-autogrow').autoGrow();
+	
+	loadComments();
+
+	
+	$('#wrapper .content').on('mousedown', 'a', function(evt){
+		var url = $(this).attr('href');
+		
+		$(this).attr('href', url);
+		$(this).attr('target', '_blank');
+	});
+
+	var len = 'golang中defer,panic,recover是很常用的三个特性，三者一起使用可以充当其他语言中try…catch…的角色，而defer本身又像其他语言的析构函数 defer 在函数返回之前调用，用于资源释放、打印日志、异常捕获等 f, err := os.Open(filename) if err != nil { return err } \/** * 这里defer要写在err判断的后边而不是os.Open后边 * 如果资源没有获取成功，就没有必要对资源执行释放操作 * 如果err不为nil而执行资源执行释放操作，有可能导致panic *\/ defer f.Close() 如果有多个defer表达式，调用顺序类似于栈，越后面的defer表达式越先被调用(后进先出) func main() { defer fmt.Println(1) defer fmt.Println(2) defer fmt.Println(3) defer fmt.Println(4) } 结果： 4 3 2 1 如果含有 defer 表达式的函数有返回值，defer 表达式可能会在设置函数返回值之后，在返回到调用函数之前修改返回值，使最终的函数返回值与你想象的不一致，这里很容易踩坑，来几个🌰 例1 func f() (result int) { defer func() { result\x2b\x2b }() return 0 } 例2 func f() (r int) { t := 5 defer func() { t = t \x2b 5 }() return t } 例3 func f() (r int) { defer func(r int) { r = r \x2b 5 }(r) return 1 } 请先不要向下看，在心里跑一遍结果，然后去验证 1的正确答案不是0，2的正确答案不是10，3的正确答案不是6 为什么呢，最重要的一点就是要明白，return xxx这一条语句并不是一条原子指令 含有defer表达式的函数返回的过程是这样的：先给返回值赋值，然后调用defer表达式，最后才是返回到调用函数中，可以用一个简单的转换规则将return xxx改写成 返回值 = xxx 调用defer函数 空的return 例1，它可以改写成这样 func f() (result int) { \/\/return语句不是一条原子调用，return xxx其实是赋值＋ret指令 result = 0 \/\/defer被插入到return之前执行，也就是赋返回值和ret指令之间 func() { result\x2b\x2b }() return } 所以这个返回值是1 例2，它可以改写成这样 func f() (r int) { t := 5 \/\/赋值指令 r = t \/\/defer被插入到赋值与返回之间执行，这个例子中返回值r没被修改过 func() { t = t \x2b 5 } return } 所以这个的结果是5 例3，它可以改写成这样 func f() (r int) { \/\/给返回值赋值 r = 1 \/\/这里改的r是传值传进去的r(func里边的r是作用域不同的重名变量)，不会改变要返回的那个r值 func(r int) { r = r \x2b 5 }(r) return } 所以这个例子的结果是1 defer被插入到了赋值与ret之间，因此可能有机会改变最终的返回值 defer函数的参数值，是在申明defer时确定下来的 在defer函数申明时，对外部变量的引用是有两种方式：作为函数参数和作为闭包引用 作为函数参数，在defer申明时就把值传递给defer，并将值缓存起来，调用defer的时候使用缓存的值进行计算 作为闭包引用，在defer函数执行时根据整个上下文确定当前的值 看个🌰 func main() { i := 0 defer fmt.Println(\x22a:\x22, i) \/\/闭包调用，将外部i传到闭包中进行计算 defer func(j int) { fmt.Println(\x22b:\x22, j) }(i) \/\/闭包调用，捕获同作用域下的i进行计算 defer func() { fmt.Println(\x22c:\x22, i) }() i\x2b\x2b } 结果： c: 1 b: 0 a: 0 说明地址：https:\/\/www.jianshu.com\/p\/63e3d57f285f panic和recover func panic(v interface{}) 中英文说明 The panic built-in function stops normal execution of the current goroutine.When a function F calls panic, normal execution of F stops immediately.Any functions whose execution was deferred by F are run in the usual way, and then F returns to its caller. To the caller G, the invocation of F then behaves like a call to panic,terminating G\x27s execution and running any deferred functions.This continues until all functions in the executing goroutine have stopped,in reverse order. At that point, the program is terminated and the error condition is reported,including the value of the argument to panic. This termination sequence is called panicking and can be controlled by the built-in function recover. panic内置函数停止当前goroutine的正常执行，当函数F调用panic时，函数F的正常执行被立即停止，然后运行所有在F函数中的defer函数，然后F返回到调用他的函数对于调用者G，F函数的行为就像panic一样，终止G的执行并运行G中所defer函数，此过程会一直继续执行到goroutine所有的函数。panic可以通过内置的recover来捕获。 func recover() interface{} 中英文说明 The recover built-in function allows a program to manage behavior of a panicking goroutine. Executing a call to recover inside a deferred function (but not any function called by it) stops the panicking sequence by restoring normal execution and retrieves the error value passed to the call of panic. If recover is called outside the deferred function it will not stop a panicking sequence. In this case, or when the goroutine is not panicking, or if the argument supplied to panic was nil, recover returns nil. Thus the return value from recover reports whether the goroutine is panicking. recover内置函数用来管理含有panic行为的goroutine，recover运行在defer函数中，获取panic抛出的错误值，并将程序恢复成正常执行的状态。如果在defer函数之外调用recover，那么recover不会停止并且捕获panic错误如果goroutine中没有panic或者捕获的panic的值为nil，recover的返回值也是nil。由此可见，recover的返回值表示当前goroutine是否有panic行为 这里有几个需要注意的问题，通过🌰表现 defer 表达式的函数如果定义在 panic 后面，该函数在 panic 后就无法被执行到 在defer前panic func main() { panic(\x22a\x22) defer func() { fmt.Println(\x22b\x22) }() } b没有被打印出来，结果： panic: a goroutine 1 [running]: main.main() \/xxxxx\/src\/xxx.go:50 \x2b0x39 exit status 2 在defer后panic func main() { defer func() { fmt.Println(\x22b\x22) }() panic(\x22a\x22) } b被正常打印，结果： b panic: a goroutine 1 [running]: main.main() \/xxxxx\/src\/xxx.go:50 \x2b0x39 exit status 2 F中出现panic时，F函数会立刻终止，不会执行F函数中后面的内容，但不会立刻返回，而调用F的defer，如果F的defer中有recover捕获，则F在执行完defer后正常返回，调用函数F的函数G继续正常执行 func G() { defer func() { fmt.Println(\x22c\x22) }() F() fmt.Println(\x22继续执行\x22) } func F() { defer func() { if err := recover(); err != nil { fmt.Println(\x22捕获异常:\x22, err) } fmt.Println(\x22b\x22) }() panic(\x22a\x22) } 结果： 捕获异常: a b 继续执行 c 如果F的defer中无recover捕获，则将panic抛到G中，G函数会立刻终止，不会执行G函数中后面的内容，但不会立刻返回，而调用G的defer...以此类推 func G() { defer func() { if err := recover(); err != nil { fmt.Println(\x22捕获异常:\x22, err) } fmt.Println(\x22c\x22) }() F() fmt.Println(\x22继续执行\x22) } func F() { defer func() { fmt.Println(\x22b\x22) }() panic(\x22a\x22) } 结果： b 捕获异常: a c 如果一直没有recover，抛出的panic到当前goroutine最上层函数时，程序直接异常终止 func G() { defer func() { fmt.Println(\x22c\x22) }() F() fmt.Println(\x22继续执行\x22) } func F() { defer func() { fmt.Println(\x22b\x22) }() panic(\x22a\x22) } 结果： b c panic: a goroutine 1 [running]: main.F() \/xxxxx\/src\/xxx.go:61 \x2b0x55 main.G() \/xxxxx\/src\/xxx.go:53 \x2b0x42 exit status 2 recover都是在当前的goroutine里进行捕获的，这就是说，对于创建goroutine的外层函数，如果goroutine内部发生panic并且内部没有用recover，外层函数是无法用recover来捕获的，这样会造成程序崩溃 func G() { defer func() { \/\/goroutine外进行recover if err := recover(); err != nil { fmt.Println(\x22捕获异常:\x22, err) } fmt.Println(\x22c\x22) }() \/\/创建goroutine调用F函数 go F() time.Sleep(time.Second) } func F() { defer func() { fmt.Println(\x22b\x22) }() \/\/goroutine内部抛出panic panic(\x22a\x22) } 结果： b panic: a goroutine 5 [running]: main.F() \/xxxxx\/src\/xxx.go:67 \x2b0x55 created by main.main \/xxxxx\/src\/xxx.go:58 \x2b0x51 exit status 2 recover返回的是interface{}类型而不是go中的 error 类型，如果外层函数需要调用err.Error()，会编译错误，也可能会在执行时panic func main() { defer func() { if err := recover(); err != nil { fmt.Println(\x22捕获异常:\x22, err.Error()) } }() panic(\x22a\x22) } 编译错误，结果： err.Error undefined (type interface {} is interface with no methods) func main() { defer func() { if err := recover(); err != nil { fmt.Println(\x22捕获异常:\x22, fmt.Errorf(\x22%v\x22, err).Error()) } }() panic(\x22a\x22) } 结果： 捕获异常: a 参考： https: \/\/golang.org\/pkg\/builtin\/#recover https: \/\/www.w3cschool.cn\/go_internals\/go_internals-drq7282o.html'.length;
+	var readTime = Math.round(len / 900);
+	if (readTime >= 1) {
+		$('.read-time').text('预计阅读时间 '+readTime+' 分钟');
+	} else {
+		$('.read-time').text('预计阅读时间不到 1 分钟');
+	}
+});
+</script>
+<script type="text/javascript" src="https://cdn.staticfile.org/ckeditor/4.6.2/ckeditor.js"></script>
+<script type="text/javascript" src="https://static.studygolang.com/static/ckeditor/config.js"></script>
+<script type="text/javascript" src="https://static.studygolang.com/static/ckeditor/article.js"></script>
+
+
+<script type="text/javascript">
+$(function(){
+	$('code[class*="language-"]').parent('pre').addClass('line-numbers');
+});
+</script>
+<script src="https://cdn.staticfile.org/prism/9000.0.1/prism.min.js"></script>
+<script src="https://cdn.staticfile.org/prism/9000.0.1/components/prism-go.min.js"></script>
+<script src="https://cdn.staticfile.org/prism/1.9.0/components/prism-json.min.js"></script>
+<script src="https://cdn.staticfile.org/prism/9000.0.1/components/prism-bash.min.js"></script>
+<script src="https://cdn.staticfile.org/prism/9000.0.1/components/prism-python.min.js"></script>
+<script src="https://cdn.staticfile.org/prism/9000.0.1/components/prism-nasm.min.js"></script>
+<script src="https://cdn.staticfile.org/prism/9000.0.1/components/prism-yaml.min.js"></script>
+<script src="https://cdn.staticfile.org/prism/9000.0.1/plugins/line-numbers/prism-line-numbers.min.js"></script>
+
+<script type="text/javascript">
+Prism.languages.xml = Prism.languages.markup;
+Prism.languages.html = Prism.languages.markup;
+Prism.languages.mathml = Prism.languages.markup;
+Prism.languages.svg = Prism.languages.markup;
+Prism.languages.text = Prism.languages.go;
+Prism.languages.golang = Prism.languages.go;
+Prism.languages.none = Prism.languages.go;
+Prism.languages.console = Prism.languages.bash;
+Prism.languages.shell = Prism.languages.bash;
+Prism.languages.asm = Prism.languages.nasm;
+Prism.languages.makefile = Prism.languages.bash;
+Prism.languages.Dockerfile = Prism.languages.bash;
+Prism.languages.protobuf = Prism.languages.clike;
+Prism.languages.c = Prism.languages.clike;
+</script>
+
+
+
+	
+
+
+
+	
+
+
+
+
+	<script type="text/javascript" src="https://static.studygolang.com/static/dist/js/sidebar.min.js?v=0.2"></script>
+
+	
+		
+		
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-4512014793067058",
+    enable_page_level_ads: true
+  });
+</script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-18275235-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+var _hmt = _hmt || [];
+if (uid > 0) {
+	_hmt.push(['_setUserTag', ''+uid, 1]);
+}
+
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?224c227cd9239761ec770bc8c1fb134c";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+<script>
+(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  } else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+	
+
+</body>
+</html>

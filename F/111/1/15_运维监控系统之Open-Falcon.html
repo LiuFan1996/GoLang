@@ -1,0 +1,2131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<title>运维监控系统之Open-Falcon  - Go语言中文网 - Golang中文社区</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+	<meta charset="utf-8">
+	<link rel="shortcut icon" href="https://static.studygolang.com/img/favicon.ico">
+	<link rel="apple-touch-icon" type="image/png" href="https://static.studygolang.com/static/img/logo2.png">
+	<meta name="keywords" content="Go,Golang,Go语言">
+<meta name="description" content="运维监控系统之Open-Falcon 一、Open-Falcon介绍 open-falcon是一款用golang和python写的监控系统，由小米启动这个项目。 1、监控系统，可以从运营级别（基本配置即可），以及应用级别（二次开发，通过端口进行日志上报），对服务器、操作系统、中间件、应用进行全面的监控，及报警，对我们的系统正常运行的作用非常重要。 2、基础监控 CPU、Load、内存、磁盘、IO、">
+	<meta name="author" content="polaris <polaris@studygolang.com>">
+	<link rel="canonical" href="https://studygolang.com/" />
+
+	
+	<link rel="stylesheet" href="https://static.studygolang.com/cssjs/fonts_googleapi.css">
+	<link rel="stylesheet" href="https://static.studygolang.com/cssjs/cosmo_bootstrap.min.css">
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
+	<link rel="stylesheet" href="https://static.studygolang.com/static/dist/css/sg_libs.min.css"/>
+	<link rel="stylesheet" href="https://static.studygolang.com/static/dist/css/sg_styles.min.css?v=0.3"/>
+	
+	
+
+<style>
+pre .line { margin: auto; line-height: 20px; border-bottom: none; }
+.image-package .image-container-fill { padding-bottom: 0 !important; }
+</style>
+
+
+
+<link href="https://cdn.staticfile.org/prism/9000.0.1/themes/prism-okaidia.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/prism/9000.0.1/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet">
+
+
+
+
+	
+	<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+	<script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+	
+</head>
+<body>
+	<header class="navbar navbar-default navbar-fixed-top" role="navigation" style="position:relative;">
+		<div class="container">
+			
+			<div class="navbar-header">
+				<a href="/" class="navbar-brand" title="Go语言中文网"><img alt="Go语言中文网" src="https://static.studygolang.com/img/logo1.png" style="margin-top: -7px; height: 45px;"></a>
+				<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+			</div>
+			<div class="navbar-collapse collapse" id="navbar-main">
+				<ul class="nav navbar-nav">
+					<li class="">
+						<a href="/topics">主题</a>
+					</li>
+					<li class="active">
+						<a href="/articles">文章</a>
+					</li>
+					<li class="">
+						<a href="/projects">项目</a>
+					</li>
+					<li class="">
+						<a href="/resources">资源</a>
+					</li>
+					<li class="">
+						<a href="/books">图书</a>
+					</li>
+					<li class="dropdown ">
+						
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#" id="readings">晨读 <span class="caret"></span></a>
+						<ul class="dropdown-menu" aria-labelledby="readings">
+							<li><a href="/readings">Go晨读</a></li>
+							<li><a href="/readings?rtype=1">综合晨读</a></li>
+						</ul>
+						
+					</li>
+					<li class="">
+						<a href="/dl">下载<i class="newfuture"></i></a>
+					</li>
+					<li class="dropdown ">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#" id="docs">官方文档 <span class="caret"></span></a>
+						<ul class="dropdown-menu" aria-labelledby="docs">
+						
+							<li><a href="http://docs.studygolang.com" target="_blank">英文文档</a></li>
+							<li><a href="http://docscn.studygolang.com" target="_blank">中文文档</a></li>
+							<li><a href="/pkgdoc">标准库中文版</a></li>
+							<li role="presentation" class="divider"></li>
+							<li><a href="http://tour.studygolang.com" target="_blank">Go指南</a></li>
+						
+						</ul>
+					</li>
+				</ul>
+				<form class="navbar-form navbar-left" action="/search" role="search" target="_blank">
+					<input type="text" name="q" class="form-control search-query" placeholder="搜索" value="">
+				</form>
+				<ul class="nav navbar-nav navbar-right" id="userbar">
+					
+					<li class="first"><a href="/account/register">注册</a></li><li class="last"><a href="/account/login">登录</a></li>
+					
+				</ul>
+			</div>
+		</div>
+	</header>
+	<div class="wrapper" id="wrapper">
+		<div class="container" role="main">
+		
+
+			
+<div class="row">
+	<div class="col-md-9 col-sm-6">
+		<div class="sep20"></div>
+		<ol class="breadcrumb">
+			<li><a href="/">首页</a></li>
+			<li><a href="/articles">文章</a></li>
+		</ol>
+		<div class="page">
+			<div class="box_white">
+				<div class="title">
+					
+					<h1 id="title" data-id="15778">
+						运维监控系统之Open-Falcon
+					</h1>
+					<small class="c9">
+					
+						
+						<span>格子_时光</span>
+						
+					
+						 · <span title="2018-10-25 14:34:46" class="timeago"></span> · 68 次点击 · 
+						<span class="read-time"></span> · 
+						<span class="timeago" title="2018-10-25 19:54:05"></span> 开始浏览 &nbsp; &nbsp;
+					
+					</small>
+				</div>
+				
+				<div class="cell">
+					
+					<div id="myeditor" class="content article-entry">
+						<div class="show-content-free">
+            <h1>运维监控系统之Open-Falcon</h1>
+<h2>一、Open-Falcon介绍</h2>
+<p>open-falcon是一款用golang和python写的监控系统，由小米启动这个项目。</p>
+<p>1、监控系统，可以从运营级别（基本配置即可），以及应用级别（二次开发，通过端口进行日志上报），对服务器、操作系统、中间件、应用进行全面的监控，及报警，对我们的系统正常运行的作用非常重要。</p>
+<p>2、基础监控</p>
+<p>CPU、Load、内存、磁盘、IO、网络相关、内核参数、ss 统计输出、端口采集、核心服务的进程存活信息采集、关键业务进程资源消耗、NTP offset采集、DNS解析采集，这些指标，都是open-falcon的agent组件直接支持的。</p>
+<p>Linux运维基础采集项：<a href="http://book.open-falcon.org/zh/faq/linux-metrics.html" target="_blank" rel="nofollow">http://book.open-falcon.org/zh/faq/linux-metrics.html</a></p>
+<p>对于这些基础监控选项全部理解透彻的时刻，也就是对Linux运行原理及命令进阶的时刻。</p>
+<p>3、第三方监控</p>
+<p>术业有专攻，运行在OS上的应用甚多，Open-Falcon的开发团队不可能把所有的第三方应用的监控全部做完，这个就需要开源社区提供更多的插件，当前对于很多常用的第三方应用都有相关插件了。</p>
+<p>4、JVM监控</p>
+<p>对于Java作为主要开发语言的大多数公司，对于JVM的监控不可或缺。</p>
+<p>每个JVM应用的参数，比如GC、类加载、JVM内存、进程、线程，都可以上报给Falcon，而这些参数的获得，都可以通过MxBeans实现。</p>
+<p>使用 Java 平台管理 bean：<a href="http://www.ibm.com/developerworks/cn/java/j-mxbeans/" target="_blank" rel="nofollow">http://www.ibm.com/developerworks/cn/java/j-mxbeans/</a></p>
+<p>5、业务应用监控</p>
+<p>对于业务需要监控的接口，比如响应时间等。可以根据业务的需要，上报相关数据到Falcon，并通过Falcon查看结果。</p>
+<p>官方网址：<a href="http://open-falcon.org/" target="_blank" rel="nofollow">http://open-falcon.org/</a></p>
+<p>中文文档：<a href="https://book.open-falcon.org/zh_0_2/" target="_blank" rel="nofollow">https://book.open-falcon.org/zh_0_2/</a></p>
+<p>中英文档：<a href="https://book.open-falcon.org/" target="_blank" rel="nofollow">https://book.open-falcon.org</a></p>
+<p>软件下载：<a href="http://open-falcon.org/" target="_blank" rel="nofollow">https://github.com/open-falcon/falcon-plus/releases</a></p>
+<h2>二、Open-Falcon编写的整个脑洞历程</h2>
+<p><a href="http://mp.weixin.qq.com/s?__biz=MjM5OTcxMzE0MQ==&amp;mid=400225178&amp;idx=1&amp;sn=c98609a9b66f84549e41cd421b4df74d" target="_blank" rel="nofollow">Open-Falcon编写的整个脑洞历程</a></p>
+<h2>三、环境准备</h2>
+<h3>1.系统环境</h3>
+<pre><code>[root@open-falcon-server ~]# cat /etc/redhat-release 
+CentOS Linux release 7.2.1511 (Core)
+</code></pre>
+<h3>2.系统优化</h3>
+<pre><code>#安装下载软件
+yum install wget -y
+ 
+#更换aliyun源
+mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
+wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+ 
+#下载epel源
+yum install epel-release.noarch -y
+rpm -Uvh http://mirrors.aliyun.com/epel/epel-release-latest-7.noarch.rpm
+yum clean all
+yum makecache
+ 
+#下载常用软件
+yum install git telnet net-tools tree nmap sysstat lrzsz dos2unix tcpdump ntpdate -y
+ 
+#配置时间同步
+ntpdate cn.pool.ntp.org
+ 
+#更改主机名
+hostnamectl set-hostname open-falcon-server
+hostname open-falcon-server
+ 
+#开启缓存
+sed -i &#39;s#keepcache=0#keepcache=1#g&#39; /etc/yum.conf 
+grep keepcache /etc/yum.conf
+ 
+#关闭selinux
+sed -i &#39;s/SELINUX=enforcing/SELINUX=disabled/g&#39; /etc/selinux/config
+setenforce 0
+ 
+#关闭防火墙
+systemctl stop firewalld.service
+systemctl disable firewalld.service
+</code></pre>
+<h3>3.软件环境准备</h3>
+<h4>（1）redis准备</h4>
+<pre><code>#安装 redis
+yum install redis -y 
+
+#redis常用命令
+
+redis-server           redis 服务端
+
+redis-cli　　　　       redis 命令行客户端
+
+redis-benchmark        redis 性能测试工具
+
+redis-check-aof 　     AOF文件修复工具
+
+redis-check-dump       RDB文件修复工具
+
+redis-sentinel 　　    Sentinel 服务端 
+
+#启动redis
+[root@open-falcon-server ~]# redis-server &amp;
+[1] 1662
+[root@open-falcon-server ~]# 1662:C 27 Jul 14:44:56.463 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+1662:M 27 Jul 14:44:56.464 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+                _._                                                  
+           _.-``__ &#39;&#39;-._                                             
+      _.-``    `.  `_.  &#39;&#39;-._           Redis 3.2.10 (00000000/0) 64 bit
+  .-`` .-```.  ```\/    _.,_ &#39;&#39;-._                                   
+ (    &#39;      ,       .-`  | `,    )     Running in standalone mode
+ |`-._`-...-` __...-.``-._|&#39;` _.-&#39;|     Port: 6379
+ |    `-._   `._    /     _.-&#39;    |     PID: 1662
+  `-._    `-._  `-./  _.-&#39;    _.-&#39;                                   
+ |`-._`-._    `-.__.-&#39;    _.-&#39;_.-&#39;|                                  
+ |    `-._`-._        _.-&#39;_.-&#39;    |           http://redis.io        
+  `-._    `-._`-.__.-&#39;_.-&#39;    _.-&#39;                                   
+ |`-._`-._    `-.__.-&#39;    _.-&#39;_.-&#39;|                                  
+ |    `-._`-._        _.-&#39;_.-&#39;    |                                  
+  `-._    `-._`-.__.-&#39;_.-&#39;    _.-&#39;                                   
+      `-._    `-.__.-&#39;    _.-&#39;                                       
+          `-._        _.-&#39;                                           
+              `-.__.-&#39;                                               
+
+1662:M 27 Jul 14:44:56.464 # WARNING: The TCP backlog setting of 511 cannot be enforced because /proc/sys/net/core/somaxconn is set to the lower value of 128.
+1662:M 27 Jul 14:44:56.464 # Server started, Redis version 3.2.10
+1662:M 27 Jul 14:44:56.464 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add &#39;vm.overcommit_memory = 1&#39; to /etc/sysctl.conf and then reboot or run the command &#39;sysctl vm.overcommit_memory=1&#39; for this to take effect.
+1662:M 27 Jul 14:44:56.464 # WARNING you have Transparent Huge Pages (THP) support enabled in your kernel. This will create latency and memory usage issues with Redis. To fix this issue run the command &#39;echo never &gt; /sys/kernel/mm/transparent_hugepage/enabled&#39; as root, and add it to your /etc/rc.local in order to retain the setting after a reboot. Redis must be restarted after THP is disabled.
+1662:M 27 Jul 14:44:56.464 * The server is now ready to accept connections on port 6379
+</code></pre>
+<h4>（2）mysql准备</h4>
+<pre><code>#安装mysql
+yum install mariadb mariadb-server -y
+
+#启动mysql
+systemctl start mariadb
+systemctl enable mariadb
+
+#登录数据库测试
+[root@open-falcon-server ~]# mysql -uroot -p
+Enter password: 
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 4
+Server version: 5.5.56-MariaDB MariaDB Server
+
+Copyright (c) 2000, 2017, Oracle, MariaDB Corporation Ab and others.
+
+Type &#39;help;&#39; or &#39;\h&#39; for help. Type &#39;\c&#39; to clear the current input statement.
+
+MariaDB [(none)]&gt; exit
+Bye
+
+#检查服务
+[root@open-falcon-server ~]# netstat -lntp|egrep &#34;3306|6379&#34;
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      1978/mysqld         
+tcp        0      0 0.0.0.0:6379            0.0.0.0:*               LISTEN      1662/redis-server * 
+tcp6       0      0 :::6379                 :::*                    LISTEN      1662/redis-server * 
+
+#初始化MySQL表结构
+cd /tmp/ &amp;&amp; git clone https://github.com/open-falcon/falcon-plus.git
+cd /tmp/falcon-plus/scripts/mysql/db_schema/
+mysql -h 127.0.0.1 -u root -p &lt; 1_uic-db-schema.sql
+mysql -h 127.0.0.1 -u root -p &lt; 2_portal-db-schema.sql
+mysql -h 127.0.0.1 -u root -p &lt; 3_dashboard-db-schema.sql
+mysql -h 127.0.0.1 -u root -p &lt; 4_graph-db-schema.sql
+mysql -h 127.0.0.1 -u root -p &lt; 5_alarms-db-schema.sql
+rm -rf /tmp/falcon-plus/
+
+#设置数据库密码
+mysqladmin -uroot password &#34;123456&#34;
+
+#检查导入的数据库
+[root@open-falcon-server ~]# mysql -uroot -p
+Enter password: 
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 11
+Server version: 5.5.56-MariaDB MariaDB Server
+
+Copyright (c) 2000, 2017, Oracle, MariaDB Corporation Ab and others.
+
+Type &#39;help;&#39; or &#39;\h&#39; for help. Type &#39;\c&#39; to clear the current input statement.
+
+MariaDB [(none)]&gt; show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| alarms             |
+| dashboard          |
+| falcon_portal      |
+| graph              |
+| mysql              |
+| performance_schema |
+| test               |
+| uic                |
++--------------------+
+9 rows in set (0.00 sec)
+
+MariaDB [(none)]&gt; exit
+Bye
+</code></pre>
+<h4>（3）Go安装</h4>
+<pre><code>#安装go语言开发包
+yum install golang -y
+
+#检查版本
+[root@open-falcon-server ~]# go version
+go version go1.9.4 linux/amd64
+
+#查看Go安装路径
+[root@open-falcon-server ~]# find / -name go
+/etc/alternatives/go
+/var/lib/alternatives/go
+/usr/bin/go
+/usr/lib/golang/src/cmd/go   #需要这个路径
+/usr/lib/golang/src/go
+/usr/lib/golang/bin/go
+/usr/lib/golang/pkg/linux_amd64/cmd/go
+/usr/lib/golang/pkg/linux_amd64/go
+</code></pre>
+<h2>四、Open-Falcon后端</h2>
+<pre><code>#创建工作目录
+export FALCON_HOME=/home/work
+export WORKSPACE=$FALCON_HOME/open-falcon
+mkdir -p $WORKSPACE
+
+#下载解压二进制包
+wget https://github.com/open-falcon/falcon-plus/releases/download/v0.2.1/open-falcon-v0.2.1.tar.gz
+tar xf open-falcon-v0.2.1.tar.gz -C $WORKSPACE
+
+#查看解压结果
+[root@open-falcon-server ~]# cd $WORKSPACE
+[root@open-falcon-server open-falcon]# ll
+总用量 3896
+drwxrwxr-x 7 501 501      67 8月  15 2017 agent
+drwxrwxr-x 5 501 501      40 8月  15 2017 aggregator
+drwxrwxr-x 5 501 501      40 8月  15 2017 alarm
+drwxrwxr-x 6 501 501      51 8月  15 2017 api
+drwxrwxr-x 5 501 501      40 8月  15 2017 gateway
+drwxrwxr-x 6 501 501      51 8月  15 2017 graph
+drwxrwxr-x 5 501 501      40 8月  15 2017 hbs
+drwxrwxr-x 5 501 501      40 8月  15 2017 judge
+drwxrwxr-x 5 501 501      40 8月  15 2017 nodata
+-rwxrwxr-x 1 501 501 3987469 8月  15 2017 open-falcon
+lrwxrwxrwx 1 501 501      16 8月  15 2017 plugins -&gt; ./agent/plugins/
+lrwxrwxrwx 1 501 501      15 8月  15 2017 public -&gt; ./agent/public/
+drwxrwxr-x 5 501 501      40 8月  15 2017 transfer
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>文件所在路径</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>aggregator</td>
+<td>/home/work/aggregator/config/cfg.json</td>
+</tr>
+<tr>
+<td>graph</td>
+<td>/home/work/graph/config/cfg.json</td>
+</tr>
+<tr>
+<td>hbs</td>
+<td>/home/work/hbs/config/cfg.json</td>
+</tr>
+<tr>
+<td>nodata</td>
+<td>/home/work/nodata/config/cfg.json</td>
+</tr>
+<tr>
+<td>api</td>
+<td>/home/work/api/config/cfg.json</td>
+</tr>
+<tr>
+<td>alarm</td>
+<td>/home/work/alarm/config/cfg.json</td>
+</tr>
+</tbody>
+</table>
+<pre><code>#修改配置文件
+sed -i &#39;s#root:@tcp(127.0.0.1:3306)#root:123456@tcp(127.0.0.1:3306)#g&#39; `find ./ -type f -name &#34;cfg.json&#34;|egrep &#34;alarm|api|nodata|hbs|graph|aggregator&#34;`
+cat `find ./ -type f -name &#34;cfg.json&#34;|egrep &#34;alarm|api|nodata|hbs|graph|aggregator&#34;` |grep &#39;root:123456@tcp(127.0.0.1:3306)&#39;
+
+#启动后端模块
+[root@open-falcon-server open-falcon]# cd /home/work/open-falcon
+[root@open-falcon-server open-falcon]# ./open-falcon start
+[falcon-graph] 5583
+[falcon-hbs] 5592
+[falcon-judge] 5600
+[falcon-transfer] 5606
+[falcon-nodata] 5613
+[falcon-aggregator] 5620
+[falcon-agent] 5628
+[falcon-gateway] 5635
+[falcon-api] 5641
+[falcon-alarm] 5653
+
+#检查服务启动状态
+[root@open-falcon-server open-falcon]# ./open-falcon check
+        falcon-graph         UP            5583 
+          falcon-hbs         UP            5592 
+        falcon-judge         UP            5600 
+     falcon-transfer         UP            5606 
+       falcon-nodata         UP            5613 
+   falcon-aggregator         UP            5620 
+        falcon-agent         UP            5628 
+      falcon-gateway         UP            5635 
+          falcon-api         UP            5641 
+        falcon-alarm         UP            5653
+
+#更多命令行工具用法
+# ./open-falcon [start|stop|restart|check|monitor|reload] module
+./open-falcon start agent
+ 
+./open-falcon check
+        falcon-graph         UP           53007
+          falcon-hbs         UP           53014
+        falcon-judge         UP           53020
+     falcon-transfer         UP           53026
+       falcon-nodata         UP           53032
+   falcon-aggregator         UP           53038
+        falcon-agent         UP           53044
+      falcon-gateway         UP           53050
+          falcon-api         UP           53056
+        falcon-alarm         UP           53063
+ 
+#For debugging , You can check $WorkDir/$moduleName/log/logs/xxx.log
+至此后端部署完成。
+
+#其他用法
+重载配置（备注：修改vi cfg.json配置文件后，可以用下面命令重载配置）
+
+curl 127.0.0.1:1988/config/reload
+</code></pre>
+<h2>五、Open-Falcon前端</h2>
+<pre><code>#创建工作目录
+export HOME=/home/work
+export WORKSPACE=$HOME/open-falcon
+mkdir -p $WORKSPACE
+cd $WORKSPACE
+
+#克隆前端组件代码
+git clone https://github.com/open-falcon/dashboard.git
+
+#安装依赖包
+yum install -y python-virtualenv
+yum install -y python-devel
+yum install -y openldap-devel
+yum install -y mysql-devel
+yum groupinstall &#34;Development tools&#34; -y
+
+#下载ez_setup.py
+cd ~
+wget --no-check-certificate https://bootstrap.pypa.io/ez_setup.py
+python ez_setup.py --insecure
+
+#下载安装pip
+wget https://pypi.python.org/packages/11/b6/abcb525026a4be042b486df43905d6893fb04f05aac21c32c638e939e447/pip-9.0.1.tar.gz#md5=35f01da33009719497f01a4ba69d63c9
+tar xf pip-9.0.1.tar.gz 
+cd pip-9.0.1
+python setup.py install
+
+#解决pip安装慢
+mkdir -p ~/.pip
+echo &#39;[global]&#39; &gt;&gt;~/.pip/pip.conf
+echo &#39;index-url = https://pypi.tuna.tsinghua.edu.cn/simple&#39; &gt;&gt;~/.pip/pip.conf
+
+#测试是否可用
+[root@open-falcon-server ~]# cd /home/work/open-falcon/dashboard
+[root@open-falcon-server dashboard]# pip -V
+pip 9.0.1 from /usr/lib/python2.7/site-packages/pip-9.0.1-py2.7.egg (python 2.7)
+[root@open-falcon-server dashboard]# pip
+
+Usage:   
+  pip &lt;command&gt; [options]
+
+Commands:
+  install                     Install packages.
+  download                    Download packages.
+  uninstall                   Uninstall packages.
+  freeze                      Output installed packages in requirements format.
+  list                        List installed packages.
+  show                        Show information about installed packages.
+  check                       Verify installed packages have compatible dependencies.
+  search                      Search PyPI for packages.
+  wheel                       Build wheels from your requirements.
+  hash                        Compute hashes of package archives.
+  completion                  A helper command used for command completion.
+  help                        Show help for commands.
+
+General Options:
+  -h, --help                  Show help.
+  --isolated                  Run pip in an isolated mode, ignoring environment variables and user configuration.
+  -v, --verbose               Give more output. Option is additive, and can be used up to 3 times.
+  -V, --version               Show version and exit.
+  -q, --quiet                 Give less output. Option is additive, and can be used up to 3 times (corresponding to WARNING, ERROR, and CRITICAL logging levels).
+  --log &lt;path&gt;                Path to a verbose appending log.
+  --proxy &lt;proxy&gt;             Specify a proxy in the form [user:passwd@]proxy.server:port.
+  --retries &lt;retries&gt;         Maximum number of retries each connection should attempt (default 5 times).
+  --timeout &lt;sec&gt;             Set the socket timeout (default 15 seconds).
+  --exists-action &lt;action&gt;    Default action when a path already exists: (s)witch, (i)gnore, (w)ipe, (b)ackup, (a)bort.
+  --trusted-host &lt;hostname&gt;   Mark this host as trusted, even though it does not have valid or any HTTPS.
+  --cert &lt;path&gt;               Path to alternate CA bundle.
+  --client-cert &lt;path&gt;        Path to SSL client certificate, a single file containing the private key and the certificate in PEM format.
+  --cache-dir &lt;dir&gt;           Store the cache data in &lt;dir&gt;.
+  --no-cache-dir              Disable the cache.
+  --disable-pip-version-check
+                              Don&#39;t periodically check PyPI to determine whether a new version of pip is available for download. Implied with --no-index.
+
+#查看需要安装模块
+[root@open-falcon-server dashboard]# cat pip_requirements.txt 
+Flask==0.10.1
+Flask-Babel==0.9
+Jinja2==2.7.2
+Werkzeug==0.9.4
+gunicorn==19.5.0
+python-dateutil==2.2
+requests==2.3.0
+mysql-python
+python-ldap
+
+#安装模块
+pip install -r pip_requirements.txt
+
+#修改配置文件
+
+配置说明：
+
+dashboard的配置文件为： &#39;rrd/config.py&#39;，根据实际情况修改：
+
+# API_ADDR 表示后端api组件的地址
+API_ADDR = &#34;http://127.0.0.1:8080/api/v1&#34;
+ 
+# 根据实际情况，修改PORTAL_DB_*, 默认用户名为root，默认密码为&#34;&#34;
+# 根据实际情况，修改ALARM_DB_*, 默认用户名为root，默认密码为&#34;&#34;
+
+配置修改：
+
+cp rrd/config.py{,.bak}
+vim rrd/config.py
+
+修改内容：
+
+# Falcon+ API
+API_ADDR = os.environ.get(&#34;API_ADDR&#34;,&#34;http://10.0.0.100:8080/api/v1&#34;)
+
+# portal database
+# TODO: read from api instead of db
+PORTAL_DB_HOST = os.environ.get(&#34;PORTAL_DB_HOST&#34;,&#34;10.0.0.100&#34;)
+PORTAL_DB_PORT = int(os.environ.get(&#34;PORTAL_DB_PORT&#34;,3306))
+PORTAL_DB_USER = os.environ.get(&#34;PORTAL_DB_USER&#34;,&#34;root&#34;)
+PORTAL_DB_PASS = os.environ.get(&#34;PORTAL_DB_PASS&#34;,&#34;123456&#34;)
+PORTAL_DB_NAME = os.environ.get(&#34;PORTAL_DB_NAME&#34;,&#34;falcon_portal&#34;)
+
+# alarm database
+# TODO: read from api instead of db
+ALARM_DB_HOST = os.environ.get(&#34;ALARM_DB_HOST&#34;,&#34;10.0.0.100&#34;)
+ALARM_DB_PORT = int(os.environ.get(&#34;ALARM_DB_PORT&#34;,3306))
+ALARM_DB_USER = os.environ.get(&#34;ALARM_DB_USER&#34;,&#34;root&#34;)
+ALARM_DB_PASS = os.environ.get(&#34;ALARM_DB_PASS&#34;,&#34;123456&#34;)
+ALARM_DB_NAME = os.environ.get(&#34;ALARM_DB_NAME&#34;,&#34;alarms&#34;)
+
+#启动服务
+[root@open-falcon-server dashboard]# virtualenv ./env
+New python executable in /home/work/open-falcon/dashboard/env/bin/python
+Installing setuptools, pip, wheel...done.
+[root@open-falcon-server dashboard]# source env/bin/activate
+(env) [root@open-falcon-server dashboard]# ./control start
+falcon-dashboard started..., pid=20814
+(env) [root@open-falcon-server dashboard]# ./control tail
+[2018-07-27 16:37:02 +0000] [20814] [INFO] Starting gunicorn 19.5.0
+[2018-07-27 16:37:02 +0000] [20814] [INFO] Listening at: http://0.0.0.0:8081 (20814)
+[2018-07-27 16:37:02 +0000] [20814] [INFO] Using worker: sync
+[2018-07-27 16:37:02 +0000] [20819] [INFO] Booting worker with pid: 20819
+[2018-07-27 16:37:02 +0000] [20820] [INFO] Booting worker with pid: 20820
+[2018-07-27 16:37:02 +0000] [20821] [INFO] Booting worker with pid: 20821
+[2018-07-27 16:37:02 +0000] [20826] [INFO] Booting worker with pid: 20826
+
+^C
+(env) [root@open-falcon-server dashboard]# deactivate
+</code></pre>
+<h2>六、访问网站</h2>
+<p>http://10.0.0.100:8081</p>
+<div class="image-package">
+<div class="image-container" style="max-width: 700px; max-height: 635px;">
+<div class="image-container-fill" style="padding-bottom: 46.489999999999995%;"></div>
+<div class="image-view" data-width="1366" data-height="635"><img data-original-src="//upload-images.jianshu.io/upload_images/14620527-d26fbe113710a9b0.png" data-original-width="1366" data-original-height="635" data-original-format="image/png" data-original-filesize="19879" src="//upload-images.jianshu.io/upload_images/14620527-d26fbe113710a9b0.png"/></div>
+</div>
+<div class="image-caption">访问网站</div>
+</div>
+<pre><code>#dashbord用户管理
+dashbord没有默认创建任何账号包括管理账号，需要你通过页面进行注册账号。
+想拥有管理全局的超级管理员账号，需要手动注册用户名为root的账号（第一个帐号名称为root的用户会被自动设置为超级管理员）。
+超级管理员可以给普通用户分配权限管理。
+
+小提示：注册账号能够被任何打开dashboard页面的人注册，所以当给相关的人注册完账号后，需要去关闭注册账号功能。只需要去修改api组件的配置文件cfg.json，将signup_disable配置项修改为true，重启api即可。当需要给人开账号的时候，再将配置选项改回去，用完再关掉即可。
+</code></pre>
+<div class="image-package">
+<div class="image-container" style="max-width: 700px; max-height: 635px;">
+<div class="image-container-fill" style="padding-bottom: 46.489999999999995%;"></div>
+<div class="image-view" data-width="1366" data-height="635"><img data-original-src="//upload-images.jianshu.io/upload_images/14620527-3f6fe181d0d1bde1.png" data-original-width="1366" data-original-height="635" data-original-format="image/png" data-original-filesize="39344" src="//upload-images.jianshu.io/upload_images/14620527-3f6fe181d0d1bde1.png"/></div>
+</div>
+<div class="image-caption">首页</div>
+</div>
+<h2>七、Open-Falcon客户端</h2>
+<pre><code>#服务端操作
+[root@open-falcon-server ~]# cd /home/work/open-falcon
+[root@open-falcon-server open-falcon]# scp -r agent root@10.0.0.101:/home/
+[root@open-falcon-server open-falcon]# scp -r open-falcon root@10.0.0.101:/home/
+
+#客户端操作
+[root@open-falcon-client ~]# mkdir -p /home/work/open-falcon
+[root@open-falcon-client ~]# mkdir -p /home/work/open-falcon
+[root@open-falcon-client ~]# mv /home/open-falcon /home/agent /home/work/open-falcon
+[root@open-falcon-client ~]# cd /home/work/open-falcon
+[root@open-falcon-client open-falcon]# vim agent/config/cfg.json
+
+修改内容：
+
+{
+    &#34;debug&#34;: true,  # 控制一些debug信息的输出，生产环境通常设置为false
+    &#34;hostname&#34;: &#34;&#34;, # agent采集了数据发给transfer，endpoint就设置为了hostname，默认通过`hostname`获取，如果配置中配置了hostname，就用配置中的
+    &#34;ip&#34;: &#34;&#34;, # agent与hbs心跳的时候会把自己的ip地址发给hbs，agent会自动探测本机ip，如果不想让agent自动探测，可以手工修改该配置
+    &#34;plugin&#34;: {
+        &#34;enabled&#34;: false, # 默认不开启插件机制
+        &#34;dir&#34;: &#34;./plugin&#34;,  # 把放置插件脚本的git repo clone到这个目录
+        &#34;git&#34;: &#34;https://github.com/open-falcon/plugin.git&#34;, # 放置插件脚本的git repo地址
+        &#34;logs&#34;: &#34;./logs&#34; # 插件执行的log，如果插件执行有问题，可以去这个目录看log
+    },
+    &#34;heartbeat&#34;: {
+        &#34;enabled&#34;: true,  # 此处enabled要设置为true
+        &#34;addr&#34;: &#34;10.0.0.100:6030&#34;, # hbs的地址，端口是hbs的rpc端口
+        &#34;interval&#34;: 60, # 心跳周期，单位是秒
+        &#34;timeout&#34;: 1000 # 连接hbs的超时时间，单位是毫秒
+    },
+    &#34;transfer&#34;: {
+        &#34;enabled&#34;: true, 
+        &#34;addrs&#34;: [
+            &#34;10.0.0.100:18433&#34;
+        ],  # transfer的地址，端口是transfer的rpc端口, 可以支持写多个transfer的地址，agent会保证HA
+        &#34;interval&#34;: 60, # 采集周期，单位是秒，即agent一分钟采集一次数据发给transfer
+        &#34;timeout&#34;: 1000 # 连接transfer的超时时间，单位是毫秒
+    },
+    &#34;http&#34;: {
+        &#34;enabled&#34;: true,  # 是否要监听http端口
+        &#34;listen&#34;: &#34;:1988&#34;,
+        &#34;backdoor&#34;: false
+    },
+    &#34;collector&#34;: {
+        &#34;ifacePrefix&#34;: [&#34;eth&#34;, &#34;em&#34;], # 默认配置只会采集网卡名称前缀是eth、em的网卡流量，配置为空就会采集所有的，lo的也会采集。可以从/proc/net/dev看到各个网卡的流量信息
+        &#34;mountPoint&#34;: []
+    },
+    &#34;default_tags&#34;: {
+    },
+    &#34;ignore&#34;: {  # 默认采集了200多个metric，可以通过ignore设置为不采集
+        &#34;cpu.busy&#34;: true,
+        &#34;df.bytes.free&#34;: true,
+        &#34;df.bytes.total&#34;: true,
+        &#34;df.bytes.used&#34;: true,
+        &#34;df.bytes.used.percent&#34;: true,
+        &#34;df.inodes.total&#34;: true,
+        &#34;df.inodes.free&#34;: true,
+        &#34;df.inodes.used&#34;: true,
+        &#34;df.inodes.used.percent&#34;: true,
+        &#34;mem.memtotal&#34;: true,
+        &#34;mem.memused&#34;: true,
+        &#34;mem.memused.percent&#34;: true,
+        &#34;mem.memfree&#34;: true,
+        &#34;mem.swaptotal&#34;: true,
+        &#34;mem.swapused&#34;: true,
+        &#34;mem.swapfree&#34;: true
+    }
+}
+
+#启动服务
+./open-falcon start agent  启动进程
+./open-falcon stop agent  停止进程
+./open-falcon monitor agent  查看日志
+
+看var目录下的log是否正常，或者浏览器访问其1988端口。另外agent提供了一个--check参数，可以检查agent是否可以正常跑在当前机器上
+
+cd /home/work/open-falcon/agent/bin/
+./falcon-agent --check
+</code></pre>
+<p>进入监控界面查看：</p>
+<div class="image-package">
+<div class="image-container" style="max-width: 700px; max-height: 635px;">
+<div class="image-container-fill" style="padding-bottom: 46.489999999999995%;"></div>
+<div class="image-view" data-width="1366" data-height="635"><img data-original-src="//upload-images.jianshu.io/upload_images/14620527-10ac08d36259e9e0.png" data-original-width="1366" data-original-height="635" data-original-format="image/png" data-original-filesize="40703" src="//upload-images.jianshu.io/upload_images/14620527-10ac08d36259e9e0.png"/></div>
+</div>
+<div class="image-caption">监控界面</div>
+</div>
+<h2>八、参考文档</h2>
+<pre><code>## Open-Falcon
+# 运维监控系统之Open-Falcon
+https://www.cnblogs.com/nulige/p/7741580.html
+
+# open-falcon安装使用监控树莓派
+https://yq.aliyun.com/articles/437196
+
+# 小米运维架构服务监控Open-Falcon
+https://blog.csdn.net/qq_27384769/article/details/79234270
+
+# 架构师的成长之路-博客-导图
+https://github.com/csy512889371/learnDoc
+
+# Open-Falcon编写的整个脑洞历程
+http://mp.weixin.qq.com/s?__biz=MjM5OTcxMzE0MQ==&amp;mid=400225178&amp;idx=1&amp;sn=c98609a9b66f84549e41cd421b4df74d
+</code></pre>
+
+          </div>
+					</div>
+					
+
+					
+					<div class="row orig-info">
+						<p>本文来自：<a href="/wr?u=http://www.jianshu.com" target="_blank" title="简书">简书</a></p>
+						<p>感谢作者：格子_时光</p>
+						<p>查看原文：<a href="/wr?u=https%3a%2f%2fwww.jianshu.com%2fp%2f5e34699fe92f" target="_blank" title="运维监控系统之Open-Falcon">运维监控系统之Open-Falcon</a></p>
+					</div>
+					
+				</div>
+				
+				<div class="content-buttons">
+					<div class="pull-right c9 f11" style="line-height: 12px; padding-top: 3px; text-shadow: 0px 1px 0px #fff;">68 次点击 &nbsp;</div>
+					<a class="tb collect" href="javascript:;" title="加入收藏" data-objid="15778" data-objtype="1" data-collect="">加入收藏</a> 
+					<a href="javascript:" onclick="window.open('http://service.weibo.com/share/share.php?url=https://studygolang.com/articles/15778&title='+encodeURIComponent('Go语言中文网 - 运维监控系统之Open-Falcon by 格子_时光 #golang#'), '_blank', 'width=550,height=370');" class="tb">微博</a>
+					<div id="content-thank">
+						<a class="tb" href="javascript:;" title="赞" data-objid="15778" data-objtype="1" data-flag="">赞</a>
+					</div>
+				</div>
+			</div>
+			
+
+			<div class="sep20"></div>
+			<div class="box_white">
+				<div class="cell subject">
+					
+					<div class="item-list">
+					
+						<a class="add-collection" href="javascript:"><i class="fa fa-plus"></i> 收入我的专栏</a>
+					</div>
+				</div>
+			</div>
+
+			<div class="sep20"></div>
+			<div class="box_white">
+				<div class="cell row">
+					
+					<div class="col-sm-6">上一篇：<a href="/articles/15777">GO语言面试系列:（二）常规性Golang面试题解析</a></div>
+					
+					
+					<div class="col-sm-6 right">下一篇：<a href="/articles/15779">兄弟连区块链入门教程eth的账户和基本单位</a></div>
+					
+				</div>
+			</div>
+
+			<div class="sep20"></div>
+
+			
+			<div id="replies" class="box_white">
+				<div class="cell">
+					<div class="pull-right" style="margin: -3px -5px 0px 0px;">
+					
+						
+						
+						<a href="/tag/redis" class="tag"><li class="fa fa-tag"></li> redis</a>
+						
+						<a href="/tag/mysql" class="tag"><li class="fa fa-tag"></li> mysql</a>
+						
+						<a href="/tag/python" class="tag"><li class="fa fa-tag"></li> python</a>
+						
+						<a href="/tag/git" class="tag"><li class="fa fa-tag"></li> git</a>
+						
+					
+					</div>
+					<span class="c9"><span class="cmtnum">0</span> 回复 </span>
+				</div>
+				<div class="comment-list cell" data-objid="15778" data-objtype="1" >
+					<div class="words hide"><div class="text-center">暂无回复</div></div>
+				</div>
+			</div>
+
+			
+			
+<div class="sep10"></div>
+<div class="box_white page-comment">
+	<input type="hidden" name="me-uid" value="0"/>
+	<div class="cell">添加一条新回复
+	
+	<span class="h2-tip">
+	（您需要 <a class="c-log" href="javascript:openPop('#login-pop');">登录</a> 后才能回复 <a href="/user/register" class="c-reg"> 没有账号</a> ？）</span>
+	
+	</div>
+	<div class="cell">
+		<div class="row clearfix md-toolbar">
+			<ul class="col-md-10 list-inline comment-tab-menu" data-comment-group="default">
+				<li class="comment-edit-tab cur"><a href="#" class="op">编辑</a></li>
+				<li class="comment-preview-tab"><a href="#" class="op">预览</a></li>
+				<li>
+					<div class="nav reply-to dn" data-floor="" data-username="">
+						<i class="fa fa-mail-reply" title=""></i>
+						<a href="#reply" class="user" title=""></a>
+						<a href="#" class="close"><i class="fa fa-close"></i></a>
+					</div>
+				</li>
+			</ul>
+			<div class="col-md-2 text-right">
+				<i id="upload-img" class="glyphicon glyphicon-picture upload-img tool-tip" data-toggle="tooltip" data-placement="top" title="上传图片"></i>
+			</div>
+		</div>
+		<div class="submit" id="commentForm">
+			<div class="comment-content-text" data-comment-group="default">
+				<textarea id="comment-content" name="content" class="comment-textarea main-textarea need-autogrow" rows="8"></textarea>
+			</div>
+			<div class="comment-content-preview cell" data-comment-group="default"></div>
+			<div class="sub row">
+				<ul class="help-block col-md-10">
+					<li>请尽量让自己的回复能够对别人有帮助</li>
+					<li class="markdown_tip">支持 Markdown 格式, <strong>**粗体**</strong>、~~删除线~~、<code>`单行代码`</code></li>
+					<li>支持 @ 本站用户；支持表情（输入 : 提示），见 <a href="http://www.emoji-cheat-sheet.com/" target="_blank">Emoji cheat sheet</a></li>
+					<li>图片支持拖拽、截图粘贴等方式上传</li>
+				</ul>
+				<div class="col-md-2 text-right"><button id="comment-submit" type="submit" title="提交" class="btn btn-default">提交</button></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<style type="text/css">
+#replies { margin-bottom: 15px; }
+#replies .reply {
+	margin: 0 -15px;
+	padding: 15px 15px;
+	position: relative;
+	border-bottom: 1px solid #eee;
+	padding-left: 74px;
+}
+#replies .reply .avatar {
+	position: absolute;
+	top: 15px;
+	left: 15px;
+}
+.avatar-48 {
+	width: 48px;
+	height: 48px;
+	border-radius: 120px;
+}
+.media-object {
+	display: block;
+}
+.avatar-16 {
+	width: 16px;
+	height: 16px;
+	border-radius: 120px;
+}
+#replies .reply .reply-to-block .info .media-object {
+	display: inline-block;
+	margin-right: 5px;
+	vertical-align: top;
+}
+#replies .reply .reply-to-block .info {
+	margin: 0;
+}
+#replies .reply .reply-to-block .info .user-name {
+	font-weight: bold;
+}
+#replies .reply .reply-to-block {
+	padding: 8px 15px;
+	background: #f7f7f7;
+	border-radius: 3px;
+	margin-bottom: 10px;
+}
+.avatar .uface, .avatar .media-object {
+	border-radius: 120px;
+}
+#replies .reply .infos {
+	min-height: 48px;
+}
+#replies .reply .info {
+	color: #999;
+	margin-bottom: 6px;
+	font-size: 12px;
+}
+#replies .reply .info .name {
+	font-weight: bold;
+	font-size: 13px;
+}
+#replies .reply .info .name a {
+	color: #555;
+}
+#replies .reply .info .floor {
+	color: #7AA87A;
+}
+#replies .reply .info a.time {
+	color: #999;
+	border-bottom: 1px dashed #ccc;
+	text-decoration: none !important;
+	cursor: pointer;
+}
+abbr[title] {
+	border-bottom: 0px;
+	cursor: pointer;
+}
+.opts {
+	color: #666;
+}
+@media (min-width: 1026px) {
+	#replies .reply .hideable {
+		display: none;
+	}
+}
+#replies .reply .opts a {
+	display: inline-block;
+	vertical-align: baseline;
+	line-height: 22px;
+	padding: 2px 5px;
+	height: 22px;
+	min-width: 22px;
+	text-align: center;
+}
+#replies .info .opts a {
+	font-size: 13px;
+	margin-left: 5px;
+	color: #999;
+}
+#replies .info .opts a.edit {
+	display: none;
+}
+.markdown {
+	position: relative;
+	letter-spacing: .03em;
+	font-size: 15px;
+	text-overflow: ellipsis;
+	word-wrap: break-word;
+}
+.markdown img.twemoji {
+	width: 20px;
+}
+.markdown img {
+	vertical-align: top;
+	max-width: 100%;
+}
+.markdown p {
+	font-size: 14px;
+	line-height: 26px;
+	margin-bottom: 0;
+	color: #000;
+}
+.md-toolbar .reply-to {
+    padding-top: 3px;
+    padding-left: 8px;
+}
+.close {
+    float: right;
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    filter: alpha(opacity=20);
+    opacity: .2;
+}
+a.close:hover {
+	background-color: #d0d0d0;
+    color: #666
+}
+.md-toolbar .reply-to .close {
+    font-size: 14px;
+    margin-left: 5px;
+    margin-top: 1px;
+}
+.edit-wrapper {
+	display: none;
+	border: 1px solid #c0d3eb;
+	padding: 8px;
+	border-radius: 4px;
+}
+
+.edit-textarea {
+	resize: none;
+	width: 100%;
+	color: #000;
+	font-size: 14px;
+	border: 1px solid #E5E5E5;
+	padding: 5px;
+}
+.btn-edit {
+	cursor: pointer;
+}
+
+
+</style>
+
+<script type="text/x-jsrender" id="one-comment">
+<div class="reply [%if is_new%]light[%/if%]" id="reply-[%:comment.floor%]">
+	<div data-floor="[%:comment.floor%]">
+		<div class="avatar"><a title="[%:user.username%]" href="/user/[%:user.username%]"><img class="media-object avatar-48" src="[%:user.avatar%]" alt="[%:user.username%]"></a></div>
+			<div class="infos">
+				<div class="info">
+					<span class="name">
+						<a class="user-name" data-name="[%:user.name%]" href="/user/[%:user.username%]">[%:user.username%]</a>
+					</span> ·
+					<span class="floor">#[%:comment.floor%]</span> ·
+					<abbr class="timeago" title="[%:comment.ctime%]">[%:comment.cmt_time%]</abbr>
+					<span class="opts pull-right">
+						<span class="op-reply hideable">
+							[%if me.uid == user.uid %]
+								<a data-floor="[%:comment.floor%]" title="编辑" class="btn-edit glyphicon glyphicon-edit"></a>
+							[%/if%]
+						  <a data-floor="[%:comment.floor%]" data-username="[%:user.username%]" title="回复此楼" class="btn-reply fa fa-mail-reply" href="#"></a>
+						</span>
+						
+					</span>
+				</div>
+				[%if comment.reply_floor > 0%]
+				<div class="reply-to-block">
+					<div class="info reply_user">
+						对
+						<a data-remote="true" href="/user/[%:comment.reply_user.username%]">
+							<img class="media-object avatar-16" src="[%:comment.reply_user.avatar%]" alt="[%:comment.reply_user.username%]"><span class="user-name">[%:comment.reply_user.username%]</span>
+						</a>
+						<a href="#reply-[%:comment.reply_floor%]"><span class="reply-floor">#[%:comment.reply_floor%]</span></a> 回复
+					</div>
+					<div class="markdown dn">
+						<p>[%:comment.reply_content%]</p>
+					</div>
+				</div>
+				[%/if%]
+
+			<div class="markdown" data-floor="[%:comment.floor%]">
+				<div class="content">[%:comment.content%]</div>
+				<div class="edit-wrapper">
+					<div class="row clearfix md-toolbar">
+						<ul class="col-md-10 list-inline comment-tab-menu" data-comment-group="[%:comment.floor%]">
+								<li class="comment-edit-tab cur"><a href="#" class="op">编辑</a></li>
+								<li class="comment-preview-tab"><a href="#" class="op">预览</a></li>
+						</ul>
+						<div class="col-md-2 text-right">
+							<i data-floor="[%:comment.floor%]" class="glyphicon glyphicon-picture upload-img tool-tip" data-toggle="tooltip" data-placement="top" title="上传图片"></i>
+						</div>
+					</div>
+					<div class="comment-content-text" data-comment-group="[%:comment.floor%]">
+						<textarea data-raw-content="[%:comment.rawContent%]" name="content" class="comment-textarea" rows="8" style="width: 100%;">[%:comment.rawContent%]</textarea>
+					</div>
+					<div class="comment-content-preview cell" data-comment-group="[%:comment.floor%]"></div>
+					<div class="text-right">
+						<button type="submit" title="提交" data-cid="[%:comment.cid%]" data-floor="[%:comment.floor%]" class="submit btn btn-default">提交</button>
+						<button title="取消" data-floor="[%:comment.floor%]" class="cancel btn btn-default">取消</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</script>
+
+
+			
+
+			
+		</div>
+	</div>
+	<div class="col-md-3 col-sm-6">
+		<div class="sep20"></div>
+		<div class="box_white sidebar">
+	
+	<div class="top">
+		<h3 class="title"><i class="glyphicon glyphicon-user"></i> 用户登录</h3>
+	</div>
+	<div class="sb-content inner_content" style="padding-bottom: 0;">
+		<form action="/account/login" method="post" class="form-horizontal login" role="form" style="padding-top: 0; padding-bottom: 0;">
+			<div class="form-group">
+				<div class="col-sm-10">
+					<input type="text" class="form-control input-sm" id="username" name="username" placeholder="请填写用户名或邮箱">
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="col-sm-10">
+					<input type="password" class="form-control input-sm" id="passwd" name="passwd" placeholder="请填写密码">
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="col-sm-10">
+					<div class="checkbox">
+						<label>
+							<input id="user_remember_me" name="remember_me" type="checkbox" value="1" checked="checked" />	记住登录状态
+						</label>
+						<input class="btn btn-default btn-sm" data-disable-with="正在登录" name="commit" type="submit" value="登录" />
+					</div>
+					<div class="sep10"></div>
+					<a href="/oauth/github/login" class="btn btn-default btn-sm">
+						<i class="fa fa-github" aria-hidden="true"></i>
+						GitHub 登录
+					</a>
+				</div>
+			</div>
+		</form>
+	</div>
+	
+</div>
+
+
+
+
+
+		
+		<div class="box_white sidebar" id="ad-right1">
+			
+				<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-format="autorelaxed"
+     data-ad-client="ca-pub-4512014793067058"
+     data-ad-slot="4230018468"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+			
+		</div>
+		
+
+		<div class="box_white sidebar">
+	<div class="top">
+		<h3 class="title"><i class="glyphicon glyphicon-stats"></i>&nbsp;今日阅读排行</h3>
+	</div>
+	<div class="sb-content">
+		<div class="rank-list" data-objtype="1" data-limit="10" data-rank_type="today">
+			<ul class="list-unstyled">
+				<img src="/static/img/loaders/loader7.gif" alt="加载中" />
+			</ul>
+		</div>
+	</div>
+</div>
+		
+		
+		<div class="box_white sidebar" id="ad-right2">
+			
+				<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- 侧边栏自适应 -->
+<ins class="adsbygoogle"
+     style="display:inline-block;min-width:270px;max-width:970px;width:100%;height:290px"
+     data-ad-client="ca-pub-4512014793067058"
+     data-ad-slot="3487838313"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+			
+		</div>
+		
+
+		<div class="box_white sidebar">
+	<div class="top">
+		<h3 class="title"><i class="glyphicon glyphicon-stats"></i>&nbsp;一周阅读排行</h3>
+	</div>
+	<div class="sb-content">
+		<div class="rank-list" data-objtype="1" data-limit="10" data-rank_type="week">
+			<ul class="list-unstyled">
+				<img src="/static/img/loaders/loader7.gif" alt="加载中" />
+			</ul>
+		</div>
+	</div>
+</div>
+		
+	</div>
+</div>
+
+<link rel="stylesheet" href="https://static.studygolang.com/static/dist/css/modal.min.css?v=0.1">
+<div class="modal contribute-modal animated" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close">×</button>
+                <h4 class="modal-title">
+                    给该专栏投稿
+                    <a href="/articles/new" class="new-note-btn">写篇新文章</a>
+                </h4>
+                <span class="notice">每篇文章有总共有 5 次投稿机会</span>
+                <div>
+                    <input type="text" placeholder="搜索我的文章" class="search-input">
+                    <a class="search-btn">
+                        <i class="fa fa-search" aria-hidden="true" style="margin: 8px -1px 0 0;display: block;"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="modal-body">
+                <ul id="contribute-note-list"></ul>
+                <div class="modal-notes-placeholder" style="display: none;">
+                    <div class="text"></div>
+                    <div class="btn"></div>
+                </div>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal animated add-self" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" data-dismiss="modal" class="close">×</button>
+                <h4 class="modal-title">收入到我管理的专栏
+                    <span class="new-collection-btn"><a href="/subject/new" target="_blank">新建专栏</a></span>
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="search">
+                    <input type="search" name="search-self" placeholder="搜索我管理的专栏">
+                    <a class="search-btn">
+                        <i class="fa fa-search" aria-hidden="true" style="margin: 6px 1px 0 0;display: block;"></i>
+                    </a>
+                </div>
+                <ul id="self-note-list"></ul>
+                <div class="modal-collections-placeholder" style="display: none;">
+                    <div class="avatar"></div>
+                    <div class="wrap">
+                        <div class="btn"></div>
+                        <div class="name"></div>
+                        <div class="text"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
+
+
+
+<template id="content_tpl">
+<div class="show-content-free">
+            <h1>运维监控系统之Open-Falcon</h1>
+<h2>一、Open-Falcon介绍</h2>
+<p>open-falcon是一款用golang和python写的监控系统，由小米启动这个项目。</p>
+<p>1、监控系统，可以从运营级别（基本配置即可），以及应用级别（二次开发，通过端口进行日志上报），对服务器、操作系统、中间件、应用进行全面的监控，及报警，对我们的系统正常运行的作用非常重要。</p>
+<p>2、基础监控</p>
+<p>CPU、Load、内存、磁盘、IO、网络相关、内核参数、ss 统计输出、端口采集、核心服务的进程存活信息采集、关键业务进程资源消耗、NTP offset采集、DNS解析采集，这些指标，都是open-falcon的agent组件直接支持的。</p>
+<p>Linux运维基础采集项：<a href="http://book.open-falcon.org/zh/faq/linux-metrics.html" target="_blank" rel="nofollow">http://book.open-falcon.org/zh/faq/linux-metrics.html</a></p>
+<p>对于这些基础监控选项全部理解透彻的时刻，也就是对Linux运行原理及命令进阶的时刻。</p>
+<p>3、第三方监控</p>
+<p>术业有专攻，运行在OS上的应用甚多，Open-Falcon的开发团队不可能把所有的第三方应用的监控全部做完，这个就需要开源社区提供更多的插件，当前对于很多常用的第三方应用都有相关插件了。</p>
+<p>4、JVM监控</p>
+<p>对于Java作为主要开发语言的大多数公司，对于JVM的监控不可或缺。</p>
+<p>每个JVM应用的参数，比如GC、类加载、JVM内存、进程、线程，都可以上报给Falcon，而这些参数的获得，都可以通过MxBeans实现。</p>
+<p>使用 Java 平台管理 bean：<a href="http://www.ibm.com/developerworks/cn/java/j-mxbeans/" target="_blank" rel="nofollow">http://www.ibm.com/developerworks/cn/java/j-mxbeans/</a></p>
+<p>5、业务应用监控</p>
+<p>对于业务需要监控的接口，比如响应时间等。可以根据业务的需要，上报相关数据到Falcon，并通过Falcon查看结果。</p>
+<p>官方网址：<a href="http://open-falcon.org/" target="_blank" rel="nofollow">http://open-falcon.org/</a></p>
+<p>中文文档：<a href="https://book.open-falcon.org/zh_0_2/" target="_blank" rel="nofollow">https://book.open-falcon.org/zh_0_2/</a></p>
+<p>中英文档：<a href="https://book.open-falcon.org/" target="_blank" rel="nofollow">https://book.open-falcon.org</a></p>
+<p>软件下载：<a href="http://open-falcon.org/" target="_blank" rel="nofollow">https://github.com/open-falcon/falcon-plus/releases</a></p>
+<h2>二、Open-Falcon编写的整个脑洞历程</h2>
+<p><a href="http://mp.weixin.qq.com/s?__biz=MjM5OTcxMzE0MQ==&amp;mid=400225178&amp;idx=1&amp;sn=c98609a9b66f84549e41cd421b4df74d" target="_blank" rel="nofollow">Open-Falcon编写的整个脑洞历程</a></p>
+<h2>三、环境准备</h2>
+<h3>1.系统环境</h3>
+<pre><code>[root@open-falcon-server ~]# cat /etc/redhat-release 
+CentOS Linux release 7.2.1511 (Core)
+</code></pre>
+<h3>2.系统优化</h3>
+<pre><code>#安装下载软件
+yum install wget -y
+ 
+#更换aliyun源
+mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
+wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+ 
+#下载epel源
+yum install epel-release.noarch -y
+rpm -Uvh http://mirrors.aliyun.com/epel/epel-release-latest-7.noarch.rpm
+yum clean all
+yum makecache
+ 
+#下载常用软件
+yum install git telnet net-tools tree nmap sysstat lrzsz dos2unix tcpdump ntpdate -y
+ 
+#配置时间同步
+ntpdate cn.pool.ntp.org
+ 
+#更改主机名
+hostnamectl set-hostname open-falcon-server
+hostname open-falcon-server
+ 
+#开启缓存
+sed -i &#39;s#keepcache=0#keepcache=1#g&#39; /etc/yum.conf 
+grep keepcache /etc/yum.conf
+ 
+#关闭selinux
+sed -i &#39;s/SELINUX=enforcing/SELINUX=disabled/g&#39; /etc/selinux/config
+setenforce 0
+ 
+#关闭防火墙
+systemctl stop firewalld.service
+systemctl disable firewalld.service
+</code></pre>
+<h3>3.软件环境准备</h3>
+<h4>（1）redis准备</h4>
+<pre><code>#安装 redis
+yum install redis -y 
+
+#redis常用命令
+
+redis-server           redis 服务端
+
+redis-cli　　　　       redis 命令行客户端
+
+redis-benchmark        redis 性能测试工具
+
+redis-check-aof 　     AOF文件修复工具
+
+redis-check-dump       RDB文件修复工具
+
+redis-sentinel 　　    Sentinel 服务端 
+
+#启动redis
+[root@open-falcon-server ~]# redis-server &amp;
+[1] 1662
+[root@open-falcon-server ~]# 1662:C 27 Jul 14:44:56.463 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+1662:M 27 Jul 14:44:56.464 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+                _._                                                  
+           _.-``__ &#39;&#39;-._                                             
+      _.-``    `.  `_.  &#39;&#39;-._           Redis 3.2.10 (00000000/0) 64 bit
+  .-`` .-```.  ```\/    _.,_ &#39;&#39;-._                                   
+ (    &#39;      ,       .-`  | `,    )     Running in standalone mode
+ |`-._`-...-` __...-.``-._|&#39;` _.-&#39;|     Port: 6379
+ |    `-._   `._    /     _.-&#39;    |     PID: 1662
+  `-._    `-._  `-./  _.-&#39;    _.-&#39;                                   
+ |`-._`-._    `-.__.-&#39;    _.-&#39;_.-&#39;|                                  
+ |    `-._`-._        _.-&#39;_.-&#39;    |           http://redis.io        
+  `-._    `-._`-.__.-&#39;_.-&#39;    _.-&#39;                                   
+ |`-._`-._    `-.__.-&#39;    _.-&#39;_.-&#39;|                                  
+ |    `-._`-._        _.-&#39;_.-&#39;    |                                  
+  `-._    `-._`-.__.-&#39;_.-&#39;    _.-&#39;                                   
+      `-._    `-.__.-&#39;    _.-&#39;                                       
+          `-._        _.-&#39;                                           
+              `-.__.-&#39;                                               
+
+1662:M 27 Jul 14:44:56.464 # WARNING: The TCP backlog setting of 511 cannot be enforced because /proc/sys/net/core/somaxconn is set to the lower value of 128.
+1662:M 27 Jul 14:44:56.464 # Server started, Redis version 3.2.10
+1662:M 27 Jul 14:44:56.464 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add &#39;vm.overcommit_memory = 1&#39; to /etc/sysctl.conf and then reboot or run the command &#39;sysctl vm.overcommit_memory=1&#39; for this to take effect.
+1662:M 27 Jul 14:44:56.464 # WARNING you have Transparent Huge Pages (THP) support enabled in your kernel. This will create latency and memory usage issues with Redis. To fix this issue run the command &#39;echo never &gt; /sys/kernel/mm/transparent_hugepage/enabled&#39; as root, and add it to your /etc/rc.local in order to retain the setting after a reboot. Redis must be restarted after THP is disabled.
+1662:M 27 Jul 14:44:56.464 * The server is now ready to accept connections on port 6379
+</code></pre>
+<h4>（2）mysql准备</h4>
+<pre><code>#安装mysql
+yum install mariadb mariadb-server -y
+
+#启动mysql
+systemctl start mariadb
+systemctl enable mariadb
+
+#登录数据库测试
+[root@open-falcon-server ~]# mysql -uroot -p
+Enter password: 
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 4
+Server version: 5.5.56-MariaDB MariaDB Server
+
+Copyright (c) 2000, 2017, Oracle, MariaDB Corporation Ab and others.
+
+Type &#39;help;&#39; or &#39;\h&#39; for help. Type &#39;\c&#39; to clear the current input statement.
+
+MariaDB [(none)]&gt; exit
+Bye
+
+#检查服务
+[root@open-falcon-server ~]# netstat -lntp|egrep &#34;3306|6379&#34;
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      1978/mysqld         
+tcp        0      0 0.0.0.0:6379            0.0.0.0:*               LISTEN      1662/redis-server * 
+tcp6       0      0 :::6379                 :::*                    LISTEN      1662/redis-server * 
+
+#初始化MySQL表结构
+cd /tmp/ &amp;&amp; git clone https://github.com/open-falcon/falcon-plus.git
+cd /tmp/falcon-plus/scripts/mysql/db_schema/
+mysql -h 127.0.0.1 -u root -p &lt; 1_uic-db-schema.sql
+mysql -h 127.0.0.1 -u root -p &lt; 2_portal-db-schema.sql
+mysql -h 127.0.0.1 -u root -p &lt; 3_dashboard-db-schema.sql
+mysql -h 127.0.0.1 -u root -p &lt; 4_graph-db-schema.sql
+mysql -h 127.0.0.1 -u root -p &lt; 5_alarms-db-schema.sql
+rm -rf /tmp/falcon-plus/
+
+#设置数据库密码
+mysqladmin -uroot password &#34;123456&#34;
+
+#检查导入的数据库
+[root@open-falcon-server ~]# mysql -uroot -p
+Enter password: 
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 11
+Server version: 5.5.56-MariaDB MariaDB Server
+
+Copyright (c) 2000, 2017, Oracle, MariaDB Corporation Ab and others.
+
+Type &#39;help;&#39; or &#39;\h&#39; for help. Type &#39;\c&#39; to clear the current input statement.
+
+MariaDB [(none)]&gt; show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| alarms             |
+| dashboard          |
+| falcon_portal      |
+| graph              |
+| mysql              |
+| performance_schema |
+| test               |
+| uic                |
++--------------------+
+9 rows in set (0.00 sec)
+
+MariaDB [(none)]&gt; exit
+Bye
+</code></pre>
+<h4>（3）Go安装</h4>
+<pre><code>#安装go语言开发包
+yum install golang -y
+
+#检查版本
+[root@open-falcon-server ~]# go version
+go version go1.9.4 linux/amd64
+
+#查看Go安装路径
+[root@open-falcon-server ~]# find / -name go
+/etc/alternatives/go
+/var/lib/alternatives/go
+/usr/bin/go
+/usr/lib/golang/src/cmd/go   #需要这个路径
+/usr/lib/golang/src/go
+/usr/lib/golang/bin/go
+/usr/lib/golang/pkg/linux_amd64/cmd/go
+/usr/lib/golang/pkg/linux_amd64/go
+</code></pre>
+<h2>四、Open-Falcon后端</h2>
+<pre><code>#创建工作目录
+export FALCON_HOME=/home/work
+export WORKSPACE=$FALCON_HOME/open-falcon
+mkdir -p $WORKSPACE
+
+#下载解压二进制包
+wget https://github.com/open-falcon/falcon-plus/releases/download/v0.2.1/open-falcon-v0.2.1.tar.gz
+tar xf open-falcon-v0.2.1.tar.gz -C $WORKSPACE
+
+#查看解压结果
+[root@open-falcon-server ~]# cd $WORKSPACE
+[root@open-falcon-server open-falcon]# ll
+总用量 3896
+drwxrwxr-x 7 501 501      67 8月  15 2017 agent
+drwxrwxr-x 5 501 501      40 8月  15 2017 aggregator
+drwxrwxr-x 5 501 501      40 8月  15 2017 alarm
+drwxrwxr-x 6 501 501      51 8月  15 2017 api
+drwxrwxr-x 5 501 501      40 8月  15 2017 gateway
+drwxrwxr-x 6 501 501      51 8月  15 2017 graph
+drwxrwxr-x 5 501 501      40 8月  15 2017 hbs
+drwxrwxr-x 5 501 501      40 8月  15 2017 judge
+drwxrwxr-x 5 501 501      40 8月  15 2017 nodata
+-rwxrwxr-x 1 501 501 3987469 8月  15 2017 open-falcon
+lrwxrwxrwx 1 501 501      16 8月  15 2017 plugins -&gt; ./agent/plugins/
+lrwxrwxrwx 1 501 501      15 8月  15 2017 public -&gt; ./agent/public/
+drwxrwxr-x 5 501 501      40 8月  15 2017 transfer
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>文件所在路径</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>aggregator</td>
+<td>/home/work/aggregator/config/cfg.json</td>
+</tr>
+<tr>
+<td>graph</td>
+<td>/home/work/graph/config/cfg.json</td>
+</tr>
+<tr>
+<td>hbs</td>
+<td>/home/work/hbs/config/cfg.json</td>
+</tr>
+<tr>
+<td>nodata</td>
+<td>/home/work/nodata/config/cfg.json</td>
+</tr>
+<tr>
+<td>api</td>
+<td>/home/work/api/config/cfg.json</td>
+</tr>
+<tr>
+<td>alarm</td>
+<td>/home/work/alarm/config/cfg.json</td>
+</tr>
+</tbody>
+</table>
+<pre><code>#修改配置文件
+sed -i &#39;s#root:@tcp(127.0.0.1:3306)#root:123456@tcp(127.0.0.1:3306)#g&#39; `find ./ -type f -name &#34;cfg.json&#34;|egrep &#34;alarm|api|nodata|hbs|graph|aggregator&#34;`
+cat `find ./ -type f -name &#34;cfg.json&#34;|egrep &#34;alarm|api|nodata|hbs|graph|aggregator&#34;` |grep &#39;root:123456@tcp(127.0.0.1:3306)&#39;
+
+#启动后端模块
+[root@open-falcon-server open-falcon]# cd /home/work/open-falcon
+[root@open-falcon-server open-falcon]# ./open-falcon start
+[falcon-graph] 5583
+[falcon-hbs] 5592
+[falcon-judge] 5600
+[falcon-transfer] 5606
+[falcon-nodata] 5613
+[falcon-aggregator] 5620
+[falcon-agent] 5628
+[falcon-gateway] 5635
+[falcon-api] 5641
+[falcon-alarm] 5653
+
+#检查服务启动状态
+[root@open-falcon-server open-falcon]# ./open-falcon check
+        falcon-graph         UP            5583 
+          falcon-hbs         UP            5592 
+        falcon-judge         UP            5600 
+     falcon-transfer         UP            5606 
+       falcon-nodata         UP            5613 
+   falcon-aggregator         UP            5620 
+        falcon-agent         UP            5628 
+      falcon-gateway         UP            5635 
+          falcon-api         UP            5641 
+        falcon-alarm         UP            5653
+
+#更多命令行工具用法
+# ./open-falcon [start|stop|restart|check|monitor|reload] module
+./open-falcon start agent
+ 
+./open-falcon check
+        falcon-graph         UP           53007
+          falcon-hbs         UP           53014
+        falcon-judge         UP           53020
+     falcon-transfer         UP           53026
+       falcon-nodata         UP           53032
+   falcon-aggregator         UP           53038
+        falcon-agent         UP           53044
+      falcon-gateway         UP           53050
+          falcon-api         UP           53056
+        falcon-alarm         UP           53063
+ 
+#For debugging , You can check $WorkDir/$moduleName/log/logs/xxx.log
+至此后端部署完成。
+
+#其他用法
+重载配置（备注：修改vi cfg.json配置文件后，可以用下面命令重载配置）
+
+curl 127.0.0.1:1988/config/reload
+</code></pre>
+<h2>五、Open-Falcon前端</h2>
+<pre><code>#创建工作目录
+export HOME=/home/work
+export WORKSPACE=$HOME/open-falcon
+mkdir -p $WORKSPACE
+cd $WORKSPACE
+
+#克隆前端组件代码
+git clone https://github.com/open-falcon/dashboard.git
+
+#安装依赖包
+yum install -y python-virtualenv
+yum install -y python-devel
+yum install -y openldap-devel
+yum install -y mysql-devel
+yum groupinstall &#34;Development tools&#34; -y
+
+#下载ez_setup.py
+cd ~
+wget --no-check-certificate https://bootstrap.pypa.io/ez_setup.py
+python ez_setup.py --insecure
+
+#下载安装pip
+wget https://pypi.python.org/packages/11/b6/abcb525026a4be042b486df43905d6893fb04f05aac21c32c638e939e447/pip-9.0.1.tar.gz#md5=35f01da33009719497f01a4ba69d63c9
+tar xf pip-9.0.1.tar.gz 
+cd pip-9.0.1
+python setup.py install
+
+#解决pip安装慢
+mkdir -p ~/.pip
+echo &#39;[global]&#39; &gt;&gt;~/.pip/pip.conf
+echo &#39;index-url = https://pypi.tuna.tsinghua.edu.cn/simple&#39; &gt;&gt;~/.pip/pip.conf
+
+#测试是否可用
+[root@open-falcon-server ~]# cd /home/work/open-falcon/dashboard
+[root@open-falcon-server dashboard]# pip -V
+pip 9.0.1 from /usr/lib/python2.7/site-packages/pip-9.0.1-py2.7.egg (python 2.7)
+[root@open-falcon-server dashboard]# pip
+
+Usage:   
+  pip &lt;command&gt; [options]
+
+Commands:
+  install                     Install packages.
+  download                    Download packages.
+  uninstall                   Uninstall packages.
+  freeze                      Output installed packages in requirements format.
+  list                        List installed packages.
+  show                        Show information about installed packages.
+  check                       Verify installed packages have compatible dependencies.
+  search                      Search PyPI for packages.
+  wheel                       Build wheels from your requirements.
+  hash                        Compute hashes of package archives.
+  completion                  A helper command used for command completion.
+  help                        Show help for commands.
+
+General Options:
+  -h, --help                  Show help.
+  --isolated                  Run pip in an isolated mode, ignoring environment variables and user configuration.
+  -v, --verbose               Give more output. Option is additive, and can be used up to 3 times.
+  -V, --version               Show version and exit.
+  -q, --quiet                 Give less output. Option is additive, and can be used up to 3 times (corresponding to WARNING, ERROR, and CRITICAL logging levels).
+  --log &lt;path&gt;                Path to a verbose appending log.
+  --proxy &lt;proxy&gt;             Specify a proxy in the form [user:passwd@]proxy.server:port.
+  --retries &lt;retries&gt;         Maximum number of retries each connection should attempt (default 5 times).
+  --timeout &lt;sec&gt;             Set the socket timeout (default 15 seconds).
+  --exists-action &lt;action&gt;    Default action when a path already exists: (s)witch, (i)gnore, (w)ipe, (b)ackup, (a)bort.
+  --trusted-host &lt;hostname&gt;   Mark this host as trusted, even though it does not have valid or any HTTPS.
+  --cert &lt;path&gt;               Path to alternate CA bundle.
+  --client-cert &lt;path&gt;        Path to SSL client certificate, a single file containing the private key and the certificate in PEM format.
+  --cache-dir &lt;dir&gt;           Store the cache data in &lt;dir&gt;.
+  --no-cache-dir              Disable the cache.
+  --disable-pip-version-check
+                              Don&#39;t periodically check PyPI to determine whether a new version of pip is available for download. Implied with --no-index.
+
+#查看需要安装模块
+[root@open-falcon-server dashboard]# cat pip_requirements.txt 
+Flask==0.10.1
+Flask-Babel==0.9
+Jinja2==2.7.2
+Werkzeug==0.9.4
+gunicorn==19.5.0
+python-dateutil==2.2
+requests==2.3.0
+mysql-python
+python-ldap
+
+#安装模块
+pip install -r pip_requirements.txt
+
+#修改配置文件
+
+配置说明：
+
+dashboard的配置文件为： &#39;rrd/config.py&#39;，根据实际情况修改：
+
+# API_ADDR 表示后端api组件的地址
+API_ADDR = &#34;http://127.0.0.1:8080/api/v1&#34;
+ 
+# 根据实际情况，修改PORTAL_DB_*, 默认用户名为root，默认密码为&#34;&#34;
+# 根据实际情况，修改ALARM_DB_*, 默认用户名为root，默认密码为&#34;&#34;
+
+配置修改：
+
+cp rrd/config.py{,.bak}
+vim rrd/config.py
+
+修改内容：
+
+# Falcon+ API
+API_ADDR = os.environ.get(&#34;API_ADDR&#34;,&#34;http://10.0.0.100:8080/api/v1&#34;)
+
+# portal database
+# TODO: read from api instead of db
+PORTAL_DB_HOST = os.environ.get(&#34;PORTAL_DB_HOST&#34;,&#34;10.0.0.100&#34;)
+PORTAL_DB_PORT = int(os.environ.get(&#34;PORTAL_DB_PORT&#34;,3306))
+PORTAL_DB_USER = os.environ.get(&#34;PORTAL_DB_USER&#34;,&#34;root&#34;)
+PORTAL_DB_PASS = os.environ.get(&#34;PORTAL_DB_PASS&#34;,&#34;123456&#34;)
+PORTAL_DB_NAME = os.environ.get(&#34;PORTAL_DB_NAME&#34;,&#34;falcon_portal&#34;)
+
+# alarm database
+# TODO: read from api instead of db
+ALARM_DB_HOST = os.environ.get(&#34;ALARM_DB_HOST&#34;,&#34;10.0.0.100&#34;)
+ALARM_DB_PORT = int(os.environ.get(&#34;ALARM_DB_PORT&#34;,3306))
+ALARM_DB_USER = os.environ.get(&#34;ALARM_DB_USER&#34;,&#34;root&#34;)
+ALARM_DB_PASS = os.environ.get(&#34;ALARM_DB_PASS&#34;,&#34;123456&#34;)
+ALARM_DB_NAME = os.environ.get(&#34;ALARM_DB_NAME&#34;,&#34;alarms&#34;)
+
+#启动服务
+[root@open-falcon-server dashboard]# virtualenv ./env
+New python executable in /home/work/open-falcon/dashboard/env/bin/python
+Installing setuptools, pip, wheel...done.
+[root@open-falcon-server dashboard]# source env/bin/activate
+(env) [root@open-falcon-server dashboard]# ./control start
+falcon-dashboard started..., pid=20814
+(env) [root@open-falcon-server dashboard]# ./control tail
+[2018-07-27 16:37:02 +0000] [20814] [INFO] Starting gunicorn 19.5.0
+[2018-07-27 16:37:02 +0000] [20814] [INFO] Listening at: http://0.0.0.0:8081 (20814)
+[2018-07-27 16:37:02 +0000] [20814] [INFO] Using worker: sync
+[2018-07-27 16:37:02 +0000] [20819] [INFO] Booting worker with pid: 20819
+[2018-07-27 16:37:02 +0000] [20820] [INFO] Booting worker with pid: 20820
+[2018-07-27 16:37:02 +0000] [20821] [INFO] Booting worker with pid: 20821
+[2018-07-27 16:37:02 +0000] [20826] [INFO] Booting worker with pid: 20826
+
+^C
+(env) [root@open-falcon-server dashboard]# deactivate
+</code></pre>
+<h2>六、访问网站</h2>
+<p>http://10.0.0.100:8081</p>
+<div class="image-package">
+<div class="image-container" style="max-width: 700px; max-height: 635px;">
+<div class="image-container-fill" style="padding-bottom: 46.489999999999995%;"></div>
+<div class="image-view" data-width="1366" data-height="635"><img data-original-src="//upload-images.jianshu.io/upload_images/14620527-d26fbe113710a9b0.png" data-original-width="1366" data-original-height="635" data-original-format="image/png" data-original-filesize="19879" src="//upload-images.jianshu.io/upload_images/14620527-d26fbe113710a9b0.png"/></div>
+</div>
+<div class="image-caption">访问网站</div>
+</div>
+<pre><code>#dashbord用户管理
+dashbord没有默认创建任何账号包括管理账号，需要你通过页面进行注册账号。
+想拥有管理全局的超级管理员账号，需要手动注册用户名为root的账号（第一个帐号名称为root的用户会被自动设置为超级管理员）。
+超级管理员可以给普通用户分配权限管理。
+
+小提示：注册账号能够被任何打开dashboard页面的人注册，所以当给相关的人注册完账号后，需要去关闭注册账号功能。只需要去修改api组件的配置文件cfg.json，将signup_disable配置项修改为true，重启api即可。当需要给人开账号的时候，再将配置选项改回去，用完再关掉即可。
+</code></pre>
+<div class="image-package">
+<div class="image-container" style="max-width: 700px; max-height: 635px;">
+<div class="image-container-fill" style="padding-bottom: 46.489999999999995%;"></div>
+<div class="image-view" data-width="1366" data-height="635"><img data-original-src="//upload-images.jianshu.io/upload_images/14620527-3f6fe181d0d1bde1.png" data-original-width="1366" data-original-height="635" data-original-format="image/png" data-original-filesize="39344" src="//upload-images.jianshu.io/upload_images/14620527-3f6fe181d0d1bde1.png"/></div>
+</div>
+<div class="image-caption">首页</div>
+</div>
+<h2>七、Open-Falcon客户端</h2>
+<pre><code>#服务端操作
+[root@open-falcon-server ~]# cd /home/work/open-falcon
+[root@open-falcon-server open-falcon]# scp -r agent root@10.0.0.101:/home/
+[root@open-falcon-server open-falcon]# scp -r open-falcon root@10.0.0.101:/home/
+
+#客户端操作
+[root@open-falcon-client ~]# mkdir -p /home/work/open-falcon
+[root@open-falcon-client ~]# mkdir -p /home/work/open-falcon
+[root@open-falcon-client ~]# mv /home/open-falcon /home/agent /home/work/open-falcon
+[root@open-falcon-client ~]# cd /home/work/open-falcon
+[root@open-falcon-client open-falcon]# vim agent/config/cfg.json
+
+修改内容：
+
+{
+    &#34;debug&#34;: true,  # 控制一些debug信息的输出，生产环境通常设置为false
+    &#34;hostname&#34;: &#34;&#34;, # agent采集了数据发给transfer，endpoint就设置为了hostname，默认通过`hostname`获取，如果配置中配置了hostname，就用配置中的
+    &#34;ip&#34;: &#34;&#34;, # agent与hbs心跳的时候会把自己的ip地址发给hbs，agent会自动探测本机ip，如果不想让agent自动探测，可以手工修改该配置
+    &#34;plugin&#34;: {
+        &#34;enabled&#34;: false, # 默认不开启插件机制
+        &#34;dir&#34;: &#34;./plugin&#34;,  # 把放置插件脚本的git repo clone到这个目录
+        &#34;git&#34;: &#34;https://github.com/open-falcon/plugin.git&#34;, # 放置插件脚本的git repo地址
+        &#34;logs&#34;: &#34;./logs&#34; # 插件执行的log，如果插件执行有问题，可以去这个目录看log
+    },
+    &#34;heartbeat&#34;: {
+        &#34;enabled&#34;: true,  # 此处enabled要设置为true
+        &#34;addr&#34;: &#34;10.0.0.100:6030&#34;, # hbs的地址，端口是hbs的rpc端口
+        &#34;interval&#34;: 60, # 心跳周期，单位是秒
+        &#34;timeout&#34;: 1000 # 连接hbs的超时时间，单位是毫秒
+    },
+    &#34;transfer&#34;: {
+        &#34;enabled&#34;: true, 
+        &#34;addrs&#34;: [
+            &#34;10.0.0.100:18433&#34;
+        ],  # transfer的地址，端口是transfer的rpc端口, 可以支持写多个transfer的地址，agent会保证HA
+        &#34;interval&#34;: 60, # 采集周期，单位是秒，即agent一分钟采集一次数据发给transfer
+        &#34;timeout&#34;: 1000 # 连接transfer的超时时间，单位是毫秒
+    },
+    &#34;http&#34;: {
+        &#34;enabled&#34;: true,  # 是否要监听http端口
+        &#34;listen&#34;: &#34;:1988&#34;,
+        &#34;backdoor&#34;: false
+    },
+    &#34;collector&#34;: {
+        &#34;ifacePrefix&#34;: [&#34;eth&#34;, &#34;em&#34;], # 默认配置只会采集网卡名称前缀是eth、em的网卡流量，配置为空就会采集所有的，lo的也会采集。可以从/proc/net/dev看到各个网卡的流量信息
+        &#34;mountPoint&#34;: []
+    },
+    &#34;default_tags&#34;: {
+    },
+    &#34;ignore&#34;: {  # 默认采集了200多个metric，可以通过ignore设置为不采集
+        &#34;cpu.busy&#34;: true,
+        &#34;df.bytes.free&#34;: true,
+        &#34;df.bytes.total&#34;: true,
+        &#34;df.bytes.used&#34;: true,
+        &#34;df.bytes.used.percent&#34;: true,
+        &#34;df.inodes.total&#34;: true,
+        &#34;df.inodes.free&#34;: true,
+        &#34;df.inodes.used&#34;: true,
+        &#34;df.inodes.used.percent&#34;: true,
+        &#34;mem.memtotal&#34;: true,
+        &#34;mem.memused&#34;: true,
+        &#34;mem.memused.percent&#34;: true,
+        &#34;mem.memfree&#34;: true,
+        &#34;mem.swaptotal&#34;: true,
+        &#34;mem.swapused&#34;: true,
+        &#34;mem.swapfree&#34;: true
+    }
+}
+
+#启动服务
+./open-falcon start agent  启动进程
+./open-falcon stop agent  停止进程
+./open-falcon monitor agent  查看日志
+
+看var目录下的log是否正常，或者浏览器访问其1988端口。另外agent提供了一个--check参数，可以检查agent是否可以正常跑在当前机器上
+
+cd /home/work/open-falcon/agent/bin/
+./falcon-agent --check
+</code></pre>
+<p>进入监控界面查看：</p>
+<div class="image-package">
+<div class="image-container" style="max-width: 700px; max-height: 635px;">
+<div class="image-container-fill" style="padding-bottom: 46.489999999999995%;"></div>
+<div class="image-view" data-width="1366" data-height="635"><img data-original-src="//upload-images.jianshu.io/upload_images/14620527-10ac08d36259e9e0.png" data-original-width="1366" data-original-height="635" data-original-format="image/png" data-original-filesize="40703" src="//upload-images.jianshu.io/upload_images/14620527-10ac08d36259e9e0.png"/></div>
+</div>
+<div class="image-caption">监控界面</div>
+</div>
+<h2>八、参考文档</h2>
+<pre><code>## Open-Falcon
+# 运维监控系统之Open-Falcon
+https://www.cnblogs.com/nulige/p/7741580.html
+
+# open-falcon安装使用监控树莓派
+https://yq.aliyun.com/articles/437196
+
+# 小米运维架构服务监控Open-Falcon
+https://blog.csdn.net/qq_27384769/article/details/79234270
+
+# 架构师的成长之路-博客-导图
+https://github.com/csy512889371/learnDoc
+
+# Open-Falcon编写的整个脑洞历程
+http://mp.weixin.qq.com/s?__biz=MjM5OTcxMzE0MQ==&amp;mid=400225178&amp;idx=1&amp;sn=c98609a9b66f84549e41cd421b4df74d
+</code></pre>
+
+          </div>
+</template>
+
+
+
+		</div>
+	</div>
+	<div class="sep10"></div>
+	<footer id="bottom">
+		<div class="container nav-content">
+			<div class="inner_content">
+				<div class="sep10"></div>   
+				<strong>
+					
+					<a href="/wiki/about" class="dark">关于</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/wiki/faq" class="dark">FAQ</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/wiki/contributors" class="dark">贡献者</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/go/feedback" class="dark">反馈</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="https://github.com/studygolang" class="dark">Github</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="http://weibo.com/studygolang" class="dark">新浪微博</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="https://play.studygolang.com" class="dark">Play</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/wiki/duty" class="dark">免责声明</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/wiki/contact" class="dark">联系我们</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/wiki/donate" class="dark">捐赠</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/wiki/cool" class="dark">酷站</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<a href="/feed.html" class="dark">Feed订阅</a> &nbsp; <span class="snow">•</span> &nbsp; 
+					
+					<span id="onlineusers">1502</span> 人在线
+				</strong>
+				&nbsp;<span class="cc">最高记录 <span id="maxonline">2928</span></span>
+				<div class="sep20"></div>
+				&copy;2013-2018 studygolang.com Go语言中文网，中国 Golang 社区，致力于构建完善的 Golang 中文社区，Go语言爱好者的学习家园。
+				<div class="sep5"></div>
+				Powered by <a href="https://github.com/studygolang/studygolang">StudyGolang(Golang + MySQL)</a> &nbsp;<span class="snow">•</span>&nbsp;<span class="snow">·</span>&nbsp;CDN 采用 <a href="https://portal.qiniu.com/signup?code=3lfz4at7pxfma" title="七牛云" class="dark" target="_blank">七牛云</a>
+				<div class="sep20"></div>
+				<span class="small cc">VERSION: V3.5.0&nbsp;<span class="snow">·</span>&nbsp;92.767482ms&nbsp;<span class="snow">·</span>&nbsp;<strong>为了更好的体验，本站推荐使用 Chrome 或 Firefox 浏览器</strong></span>
+				<div class="sep20"></div>
+				<span class="f12 c9"><a href="http://www.miibeian.gov.cn/" target="_blank" rel="nofollow">京ICP备14030343号-1</a></span>
+				<div class="sep10"></div>
+			</div>
+		</div>
+	</footer>
+
+	<div id="gotop"></div>
+
+	
+	<input type="hidden" id="is_login_status" value="0" />
+	<div class="pop login-pop" id="login-pop">
+		<div style="position: relative;"><span class="close" style="position: absolute; right: -15px; top: -15px; cursor: pointer; color: #000; font-size: 13px;">X</span></div>
+		<div class="login-form">
+			<div class="error text-center"></div>
+			<div class="text-center" style="margin-bottom: 5px;">登录和大家一起探讨吧</div>
+			<form action="#" method="post" class="form-horizontal" role="form">
+				<div class="form-group">
+					<label for="username" class="col-sm-3 control-label">用户名</label>
+					<div class="col-sm-9 form-input">
+						<input type="text" class="form-control" id="form_username" name="username" placeholder="请填写用户名或邮箱">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="passwd" class="col-sm-3 control-label">密码</label>
+					<div class="col-sm-9 form-input">
+						<input type="password" class="form-control" id="form_passwd" name="passwd" placeholder="密码">
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-sm-offset-2 col-sm-10">
+						<div class="checkbox">
+							<label>
+								<input id="user_remember_me" name="remember_me" type="checkbox" value="1" checked="checked" />	记住登录状态
+							</label>
+							<button type="submit" id="login-btn" class="btn btn-default btn-sm">登录</button>
+						</div>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-sm-offset-2 col-sm-10">
+						<a id="login-github" href="/oauth/github/login" class="btn btn-default btn-sm pull-left">
+							<i class="fa fa-github" aria-hidden="true"></i>
+							GitHub 登录
+						</a>
+						<div class="forget">
+							<a href="/account/forgetpwd" title="点击找回密码">忘记密码？</a>
+						</div>
+						<div class="register">
+							<span>还不是会员</span><a href="/account/register">现在注册</a>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+	<div id="sg-overlay"></div>
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="https://cdn.staticfile.org/jquery-timeago/1.6.1/jquery.timeago.min.js"></script>
+	<script src="https://cdn.staticfile.org/zoom.js/0.0.1/zoom.min.js"></script>
+	<script src="https://cdn.staticfile.org/marked/0.3.6/marked.min.js"></script>
+	<script src="https://cdn.staticfile.org/Caret.js/0.3.1/jquery.caret.min.js"></script>
+	<script src="https://cdn.staticfile.org/emojify.js/1.1.0/js/emojify.min.js"></script>
+
+	<script type="text/javascript">
+	var uid =  0 ;
+	var isHttps =  true ,
+		cdnDomain = "https:\/\/static.studygolang.com\/";
+	if (isHttps) {
+		var wsUrl = 'wss://studygolang.com/ws?uid='+uid;
+	} else {
+		var wsUrl = 'ws://studygolang.com/ws?uid='+uid;
+	}
+	var GLaunchTime =  1540036286 *1000;
+	</script>
+	<script src="https://cdn.staticfile.org/lscache/1.1.0/lscache.min.js"></script>
+	<script src="https://cdn.staticfile.org/jsrender/0.9.90/jsrender.min.js"></script>
+	<script src="https://cdn.staticfile.org/plupload/3.1.1/plupload.full.min.js"></script>
+	<script type="text/javascript">
+	$.views.settings.delimiters("[%", "%]");
+	
+	</script>
+
+	<script src="https://static.studygolang.com/static/dist/js/sg_libs.min.js"></script>
+	<script src="https://static.studygolang.com/static/dist/js/sg_base.min.js?v=0.4"></script>
+
+	
+
+<script type="text/javascript" src="https://static.studygolang.com/static/dist/js/articles.min.js"></script>
+
+<script type="text/javascript">
+
+SG.SIDE_BARS = [
+	"/rank/view",
+];
+
+var keyprefix = 'article';
+var objid =  15778 ;
+
+$(function(){
+	
+	
+	
+	$('.need-autogrow').autoGrow();
+	
+	loadComments();
+
+	
+	$('#wrapper .content').on('mousedown', 'a', function(evt){
+		var url = $(this).attr('href');
+		
+		$(this).attr('href', url);
+		$(this).attr('target', '_blank');
+	});
+
+	var len = '运维监控系统之Open-Falcon 一、Open-Falcon介绍 open-falcon是一款用golang和python写的监控系统，由小米启动这个项目。 1、监控系统，可以从运营级别（基本配置即可），以及应用级别（二次开发，通过端口进行日志上报），对服务器、操作系统、中间件、应用进行全面的监控，及报警，对我们的系统正常运行的作用非常重要。 2、基础监控 CPU、Load、内存、磁盘、IO、网络相关、内核参数、ss 统计输出、端口采集、核心服务的进程存活信息采集、关键业务进程资源消耗、NTP offset采集、DNS解析采集，这些指标，都是open-falcon的agent组件直接支持的。 Linux运维基础采集项：http:\/\/book.open-falcon.org\/zh\/faq\/linux-metrics.html 对于这些基础监控选项全部理解透彻的时刻，也就是对Linux运行原理及命令进阶的时刻。 3、第三方监控 术业有专攻，运行在OS上的应用甚多，Open-Falcon的开发团队不可能把所有的第三方应用的监控全部做完，这个就需要开源社区提供更多的插件，当前对于很多常用的第三方应用都有相关插件了。 4、JVM监控 对于Java作为主要开发语言的大多数公司，对于JVM的监控不可或缺。 每个JVM应用的参数，比如GC、类加载、JVM内存、进程、线程，都可以上报给Falcon，而这些参数的获得，都可以通过MxBeans实现。 使用 Java 平台管理 bean：http:\/\/www.ibm.com\/developerworks\/cn\/java\/j-mxbeans\/ 5、业务应用监控 对于业务需要监控的接口，比如响应时间等。可以根据业务的需要，上报相关数据到Falcon，并通过Falcon查看结果。 官方网址：http:\/\/open-falcon.org\/ 中文文档：https:\/\/book.open-falcon.org\/zh_0_2\/ 中英文档：https:\/\/book.open-falcon.org 软件下载：https:\/\/github.com\/open-falcon\/falcon-plus\/releases 二、Open-Falcon编写的整个脑洞历程 Open-Falcon编写的整个脑洞历程 三、环境准备 1.系统环境 [root@open-falcon-server ~]# cat \/etc\/redhat-release CentOS Linux release 7.2.1511 (Core) 2.系统优化 #安装下载软件 yum install wget -y #更换aliyun源 mv \/etc\/yum.repos.d\/CentOS-Base.repo \/etc\/yum.repos.d\/CentOS-Base.repo.backup wget -O \/etc\/yum.repos.d\/CentOS-Base.repo http:\/\/mirrors.aliyun.com\/repo\/Centos-7.repo #下载epel源 yum install epel-release.noarch -y rpm -Uvh http:\/\/mirrors.aliyun.com\/epel\/epel-release-latest-7.noarch.rpm yum clean all yum makecache #下载常用软件 yum install git telnet net-tools tree nmap sysstat lrzsz dos2unix tcpdump ntpdate -y #配置时间同步 ntpdate cn.pool.ntp.org #更改主机名 hostnamectl set-hostname open-falcon-server hostname open-falcon-server #开启缓存 sed -i \x27s#keepcache=0#keepcache=1#g\x27 \/etc\/yum.conf grep keepcache \/etc\/yum.conf #关闭selinux sed -i \x27s\/SELINUX=enforcing\/SELINUX=disabled\/g\x27 \/etc\/selinux\/config setenforce 0 #关闭防火墙 systemctl stop firewalld.service systemctl disable firewalld.service 3.软件环境准备 （1）redis准备 #安装 redis yum install redis -y #redis常用命令 redis-server redis 服务端 redis-cli redis 命令行客户端 redis-benchmark redis 性能测试工具 redis-check-aof AOF文件修复工具 redis-check-dump RDB文件修复工具 redis-sentinel Sentinel 服务端 #启动redis [root@open-falcon-server ~]# redis-server \x26 [1] 1662 [root@open-falcon-server ~]# 1662:C 27 Jul 14:44:56.463 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server \/path\/to\/redis.conf 1662:M 27 Jul 14:44:56.464 * Increased maximum number of open files to 10032 (it was originally set to 1024). _._ _.-``__ \x27\x27-._ _.-`` `. `_. \x27\x27-._ Redis 3.2.10 (00000000\/0) 64 bit .-`` .-```. ```\\\/ _.,_ \x27\x27-._ ( \x27 , .-` | `, ) Running in standalone mode |`-._`-...-` __...-.``-._|\x27` _.-\x27| Port: 6379 | `-._ `._ \/ _.-\x27 | PID: 1662 `-._ `-._ `-.\/ _.-\x27 _.-\x27 |`-._`-._ `-.__.-\x27 _.-\x27_.-\x27| | `-._`-._ _.-\x27_.-\x27 | http:\/\/redis.io `-._ `-._`-.__.-\x27_.-\x27 _.-\x27 |`-._`-._ `-.__.-\x27 _.-\x27_.-\x27| | `-._`-._ _.-\x27_.-\x27 | `-._ `-._`-.__.-\x27_.-\x27 _.-\x27 `-._ `-.__.-\x27 _.-\x27 `-._ _.-\x27 `-.__.-\x27 1662:M 27 Jul 14:44:56.464 # WARNING: The TCP backlog setting of 511 cannot be enforced because \/proc\/sys\/net\/core\/somaxconn is set to the lower value of 128. 1662:M 27 Jul 14:44:56.464 # Server started, Redis version 3.2.10 1662:M 27 Jul 14:44:56.464 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add \x27vm.overcommit_memory = 1\x27 to \/etc\/sysctl.conf and then reboot or run the command \x27sysctl vm.overcommit_memory=1\x27 for this to take effect. 1662:M 27 Jul 14:44:56.464 # WARNING you have Transparent Huge Pages (THP) support enabled in your kernel. This will create latency and memory usage issues with Redis. To fix this issue run the command \x27echo never \x3e \/sys\/kernel\/mm\/transparent_hugepage\/enabled\x27 as root, and add it to your \/etc\/rc.local in order to retain the setting after a reboot. Redis must be restarted after THP is disabled. 1662:M 27 Jul 14:44:56.464 * The server is now ready to accept connections on port 6379 （2）mysql准备 #安装mysql yum install mariadb mariadb-server -y #启动mysql systemctl start mariadb systemctl enable mariadb #登录数据库测试 [root@open-falcon-server ~]# mysql -uroot -p Enter password: Welcome to the MariaDB monitor. Commands end with ; or \\g. Your MariaDB connection id is 4 Server version: 5.5.56-MariaDB MariaDB Server Copyright (c) 2000, 2017, Oracle, MariaDB Corporation Ab and others. Type \x27help;\x27 or \x27\\h\x27 for help. Type \x27\\c\x27 to clear the current input statement. MariaDB [(none)]\x3e exit Bye #检查服务 [root@open-falcon-server ~]# netstat -lntp|egrep \x223306|6379\x22 tcp 0 0 0.0.0.0:3306 0.0.0.0:* LISTEN 1978\/mysqld tcp 0 0 0.0.0.0:6379 0.0.0.0:* LISTEN 1662\/redis-server * tcp6 0 0 :::6379 :::* LISTEN 1662\/redis-server * #初始化MySQL表结构 cd \/tmp\/ \x26\x26 git clone https:\/\/github.com\/open-falcon\/falcon-plus.git cd \/tmp\/falcon-plus\/scripts\/mysql\/db_schema\/ mysql -h 127.0.0.1 -u root -p \x3c 1_uic-db-schema.sql mysql -h 127.0.0.1 -u root -p \x3c 2_portal-db-schema.sql mysql -h 127.0.0.1 -u root -p \x3c 3_dashboard-db-schema.sql mysql -h 127.0.0.1 -u root -p \x3c 4_graph-db-schema.sql mysql -h 127.0.0.1 -u root -p \x3c 5_alarms-db-schema.sql rm -rf \/tmp\/falcon-plus\/ #设置数据库密码 mysqladmin -uroot password \x22123456\x22 #检查导入的数据库 [root@open-falcon-server ~]# mysql -uroot -p Enter password: Welcome to the MariaDB monitor. Commands end with ; or \\g. Your MariaDB connection id is 11 Server version: 5.5.56-MariaDB MariaDB Server Copyright (c) 2000, 2017, Oracle, MariaDB Corporation Ab and others. Type \x27help;\x27 or \x27\\h\x27 for help. Type \x27\\c\x27 to clear the current input statement. MariaDB [(none)]\x3e show databases; \x2b--------------------\x2b | Database | \x2b--------------------\x2b | information_schema | | alarms | | dashboard | | falcon_portal | | graph | | mysql | | performance_schema | | test | | uic | \x2b--------------------\x2b 9 rows in set (0.00 sec) MariaDB [(none)]\x3e exit Bye （3）Go安装 #安装go语言开发包 yum install golang -y #检查版本 [root@open-falcon-server ~]# go version go version go1.9.4 linux\/amd64 #查看Go安装路径 [root@open-falcon-server ~]# find \/ -name go \/etc\/alternatives\/go \/var\/lib\/alternatives\/go \/usr\/bin\/go \/usr\/lib\/golang\/src\/cmd\/go #需要这个路径 \/usr\/lib\/golang\/src\/go \/usr\/lib\/golang\/bin\/go \/usr\/lib\/golang\/pkg\/linux_amd64\/cmd\/go \/usr\/lib\/golang\/pkg\/linux_amd64\/go 四、Open-Falcon后端 #创建工作目录 export FALCON_HOME=\/home\/work export WORKSPACE=$FALCON_HOME\/open-falcon mkdir -p $WORKSPACE #下载解压二进制包 wget https:\/\/github.com\/open-falcon\/falcon-plus\/releases\/download\/v0.2.1\/open-falcon-v0.2.1.tar.gz tar xf open-falcon-v0.2.1.tar.gz -C $WORKSPACE #查看解压结果 [root@open-falcon-server ~]# cd $WORKSPACE [root@open-falcon-server open-falcon]# ll 总用量 3896 drwxrwxr-x 7 501 501 67 8月 15 2017 agent drwxrwxr-x 5 501 501 40 8月 15 2017 aggregator drwxrwxr-x 5 501 501 40 8月 15 2017 alarm drwxrwxr-x 6 501 501 51 8月 15 2017 api drwxrwxr-x 5 501 501 40 8月 15 2017 gateway drwxrwxr-x 6 501 501 51 8月 15 2017 graph drwxrwxr-x 5 501 501 40 8月 15 2017 hbs drwxrwxr-x 5 501 501 40 8月 15 2017 judge drwxrwxr-x 5 501 501 40 8月 15 2017 nodata -rwxrwxr-x 1 501 501 3987469 8月 15 2017 open-falcon lrwxrwxrwx 1 501 501 16 8月 15 2017 plugins -\x3e .\/agent\/plugins\/ lrwxrwxrwx 1 501 501 15 8月 15 2017 public -\x3e .\/agent\/public\/ drwxrwxr-x 5 501 501 40 8月 15 2017 transfer 模块 文件所在路径 aggregator \/home\/work\/aggregator\/config\/cfg.json graph \/home\/work\/graph\/config\/cfg.json hbs \/home\/work\/hbs\/config\/cfg.json nodata \/home\/work\/nodata\/config\/cfg.json api \/home\/work\/api\/config\/cfg.json alarm \/home\/work\/alarm\/config\/cfg.json #修改配置文件 sed -i \x27s#root:@tcp(127.0.0.1:3306)#root:123456@tcp(127.0.0.1:3306)#g\x27 `find .\/ -type f -name \x22cfg.json\x22|egrep \x22alarm|api|nodata|hbs|graph|aggregator\x22` cat `find .\/ -type f -name \x22cfg.json\x22|egrep \x22alarm|api|nodata|hbs|graph|aggregator\x22` |grep \x27root:123456@tcp(127.0.0.1:3306)\x27 #启动后端模块 [root@open-falcon-server open-falcon]# cd \/home\/work\/open-falcon [root@open-falcon-server open-falcon]# .\/open-falcon start [falcon-graph] 5583 [falcon-hbs] 5592 [falcon-judge] 5600 [falcon-transfer] 5606 [falcon-nodata] 5613 [falcon-aggregator] 5620 [falcon-agent] 5628 [falcon-gateway] 5635 [falcon-api] 5641 [falcon-alarm] 5653 #检查服务启动状态 [root@open-falcon-server open-falcon]# .\/open-falcon check falcon-graph UP 5583 falcon-hbs UP 5592 falcon-judge UP 5600 falcon-transfer UP 5606 falcon-nodata UP 5613 falcon-aggregator UP 5620 falcon-agent UP 5628 falcon-gateway UP 5635 falcon-api UP 5641 falcon-alarm UP 5653 #更多命令行工具用法 # .\/open-falcon [start|stop|restart|check|monitor|reload] module .\/open-falcon start agent .\/open-falcon check falcon-graph UP 53007 falcon-hbs UP 53014 falcon-judge UP 53020 falcon-transfer UP 53026 falcon-nodata UP 53032 falcon-aggregator UP 53038 falcon-agent UP 53044 falcon-gateway UP 53050 falcon-api UP 53056 falcon-alarm UP 53063 #For debugging , You can check $WorkDir\/$moduleName\/log\/logs\/xxx.log 至此后端部署完成。 #其他用法 重载配置（备注：修改vi cfg.json配置文件后，可以用下面命令重载配置） curl 127.0.0.1:1988\/config\/reload 五、Open-Falcon前端 #创建工作目录 export HOME=\/home\/work export WORKSPACE=$HOME\/open-falcon mkdir -p $WORKSPACE cd $WORKSPACE #克隆前端组件代码 git clone https:\/\/github.com\/open-falcon\/dashboard.git #安装依赖包 yum install -y python-virtualenv yum install -y python-devel yum install -y openldap-devel yum install -y mysql-devel yum groupinstall \x22Development tools\x22 -y #下载ez_setup.py cd ~ wget --no-check-certificate https:\/\/bootstrap.pypa.io\/ez_setup.py python ez_setup.py --insecure #下载安装pip wget https:\/\/pypi.python.org\/packages\/11\/b6\/abcb525026a4be042b486df43905d6893fb04f05aac21c32c638e939e447\/pip-9.0.1.tar.gz#md5=35f01da33009719497f01a4ba69d63c9 tar xf pip-9.0.1.tar.gz cd pip-9.0.1 python setup.py install #解决pip安装慢 mkdir -p ~\/.pip echo \x27[global]\x27 \x3e\x3e~\/.pip\/pip.conf echo \x27index-url = https:\/\/pypi.tuna.tsinghua.edu.cn\/simple\x27 \x3e\x3e~\/.pip\/pip.conf #测试是否可用 [root@open-falcon-server ~]# cd \/home\/work\/open-falcon\/dashboard [root@open-falcon-server dashboard]# pip -V pip 9.0.1 from \/usr\/lib\/python2.7\/site-packages\/pip-9.0.1-py2.7.egg (python 2.7) [root@open-falcon-server dashboard]# pip Usage: pip \x3ccommand\x3e [options] Commands: install Install packages. download Download packages. uninstall Uninstall packages. freeze Output installed packages in requirements format. list List installed packages. show Show information about installed packages. check Verify installed packages have compatible dependencies. search Search PyPI for packages. wheel Build wheels from your requirements. hash Compute hashes of package archives. completion A helper command used for command completion. help Show help for commands. General Options: -h, --help Show help. --isolated Run pip in an isolated mode, ignoring environment variables and user configuration. -v, --verbose Give more output. Option is additive, and can be used up to 3 times. -V, --version Show version and exit. -q, --quiet Give less output. Option is additive, and can be used up to 3 times (corresponding to WARNING, ERROR, and CRITICAL logging levels). --log \x3cpath\x3e Path to a verbose appending log. --proxy \x3cproxy\x3e Specify a proxy in the form [user:passwd@]proxy.server:port. --retries \x3cretries\x3e Maximum number of retries each connection should attempt (default 5 times). --timeout \x3csec\x3e Set the socket timeout (default 15 seconds). --exists-action \x3caction\x3e Default action when a path already exists: (s)witch, (i)gnore, (w)ipe, (b)ackup, (a)bort. --trusted-host \x3chostname\x3e Mark this host as trusted, even though it does not have valid or any HTTPS. --cert \x3cpath\x3e Path to alternate CA bundle. --client-cert \x3cpath\x3e Path to SSL client certificate, a single file containing the private key and the certificate in PEM format. --cache-dir \x3cdir\x3e Store the cache data in \x3cdir\x3e. --no-cache-dir Disable the cache. --disable-pip-version-check Don\x27t periodically check PyPI to determine whether a new version of pip is available for download. Implied with --no-index. #查看需要安装模块 [root@open-falcon-server dashboard]# cat pip_requirements.txt Flask==0.10.1 Flask-Babel==0.9 Jinja2==2.7.2 Werkzeug==0.9.4 gunicorn==19.5.0 python-dateutil==2.2 requests==2.3.0 mysql-python python-ldap #安装模块 pip install -r pip_requirements.txt #修改配置文件 配置说明： dashboard的配置文件为： \x27rrd\/config.py\x27，根据实际情况修改： # API_ADDR 表示后端api组件的地址 API_ADDR = \x22http:\/\/127.0.0.1:8080\/api\/v1\x22 # 根据实际情况，修改PORTAL_DB_*, 默认用户名为root，默认密码为\x22\x22 # 根据实际情况，修改ALARM_DB_*, 默认用户名为root，默认密码为\x22\x22 配置修改： cp rrd\/config.py{,.bak} vim rrd\/config.py 修改内容： # Falcon\x2b API API_ADDR = os.environ.get(\x22API_ADDR\x22,\x22http:\/\/10.0.0.100:8080\/api\/v1\x22) # portal database # TODO: read from api instead of db PORTAL_DB_HOST = os.environ.get(\x22PORTAL_DB_HOST\x22,\x2210.0.0.100\x22) PORTAL_DB_PORT = int(os.environ.get(\x22PORTAL_DB_PORT\x22,3306)) PORTAL_DB_USER = os.environ.get(\x22PORTAL_DB_USER\x22,\x22root\x22) PORTAL_DB_PASS = os.environ.get(\x22PORTAL_DB_PASS\x22,\x22123456\x22) PORTAL_DB_NAME = os.environ.get(\x22PORTAL_DB_NAME\x22,\x22falcon_portal\x22) # alarm database # TODO: read from api instead of db ALARM_DB_HOST = os.environ.get(\x22ALARM_DB_HOST\x22,\x2210.0.0.100\x22) ALARM_DB_PORT = int(os.environ.get(\x22ALARM_DB_PORT\x22,3306)) ALARM_DB_USER = os.environ.get(\x22ALARM_DB_USER\x22,\x22root\x22) ALARM_DB_PASS = os.environ.get(\x22ALARM_DB_PASS\x22,\x22123456\x22) ALARM_DB_NAME = os.environ.get(\x22ALARM_DB_NAME\x22,\x22alarms\x22) #启动服务 [root@open-falcon-server dashboard]# virtualenv .\/env New python executable in \/home\/work\/open-falcon\/dashboard\/env\/bin\/python Installing setuptools, pip, wheel...done. [root@open-falcon-server dashboard]# source env\/bin\/activate (env) [root@open-falcon-server dashboard]# .\/control start falcon-dashboard started..., pid=20814 (env) [root@open-falcon-server dashboard]# .\/control tail [2018-07-27 16:37:02 \x2b0000] [20814] [INFO] Starting gunicorn 19.5.0 [2018-07-27 16:37:02 \x2b0000] [20814] [INFO] Listening at: http:\/\/0.0.0.0:8081 (20814) [2018-07-27 16:37:02 \x2b0000] [20814] [INFO] Using worker: sync [2018-07-27 16:37:02 \x2b0000] [20819] [INFO] Booting worker with pid: 20819 [2018-07-27 16:37:02 \x2b0000] [20820] [INFO] Booting worker with pid: 20820 [2018-07-27 16:37:02 \x2b0000] [20821] [INFO] Booting worker with pid: 20821 [2018-07-27 16:37:02 \x2b0000] [20826] [INFO] Booting worker with pid: 20826 ^C (env) [root@open-falcon-server dashboard]# deactivate 六、访问网站 http:\/\/10.0.0.100:8081 访问网站 #dashbord用户管理 dashbord没有默认创建任何账号包括管理账号，需要你通过页面进行注册账号。 想拥有管理全局的超级管理员账号，需要手动注册用户名为root的账号（第一个帐号名称为root的用户会被自动设置为超级管理员）。 超级管理员可以给普通用户分配权限管理。 小提示：注册账号能够被任何打开dashboard页面的人注册，所以当给相关的人注册完账号后，需要去关闭注册账号功能。只需要去修改api组件的配置文件cfg.json，将signup_disable配置项修改为true，重启api即可。当需要给人开账号的时候，再将配置选项改回去，用完再关掉即可。 首页 七、Open-Falcon客户端 #服务端操作 [root@open-falcon-server ~]# cd \/home\/work\/open-falcon [root@open-falcon-server open-falcon]# scp -r agent root@10.0.0.101:\/home\/ [root@open-falcon-server open-falcon]# scp -r open-falcon root@10.0.0.101:\/home\/ #客户端操作 [root@open-falcon-client ~]# mkdir -p \/home\/work\/open-falcon [root@open-falcon-client ~]# mkdir -p \/home\/work\/open-falcon [root@open-falcon-client ~]# mv \/home\/open-falcon \/home\/agent \/home\/work\/open-falcon [root@open-falcon-client ~]# cd \/home\/work\/open-falcon [root@open-falcon-client open-falcon]# vim agent\/config\/cfg.json 修改内容： { \x22debug\x22: true, # 控制一些debug信息的输出，生产环境通常设置为false \x22hostname\x22: \x22\x22, # agent采集了数据发给transfer，endpoint就设置为了hostname，默认通过`hostname`获取，如果配置中配置了hostname，就用配置中的 \x22ip\x22: \x22\x22, # agent与hbs心跳的时候会把自己的ip地址发给hbs，agent会自动探测本机ip，如果不想让agent自动探测，可以手工修改该配置 \x22plugin\x22: { \x22enabled\x22: false, # 默认不开启插件机制 \x22dir\x22: \x22.\/plugin\x22, # 把放置插件脚本的git repo clone到这个目录 \x22git\x22: \x22https:\/\/github.com\/open-falcon\/plugin.git\x22, # 放置插件脚本的git repo地址 \x22logs\x22: \x22.\/logs\x22 # 插件执行的log，如果插件执行有问题，可以去这个目录看log }, \x22heartbeat\x22: { \x22enabled\x22: true, # 此处enabled要设置为true \x22addr\x22: \x2210.0.0.100:6030\x22, # hbs的地址，端口是hbs的rpc端口 \x22interval\x22: 60, # 心跳周期，单位是秒 \x22timeout\x22: 1000 # 连接hbs的超时时间，单位是毫秒 }, \x22transfer\x22: { \x22enabled\x22: true, \x22addrs\x22: [ \x2210.0.0.100:18433\x22 ], # transfer的地址，端口是transfer的rpc端口, 可以支持写多个transfer的地址，agent会保证HA \x22interval\x22: 60, # 采集周期，单位是秒，即agent一分钟采集一次数据发给transfer \x22timeout\x22: 1000 # 连接transfer的超时时间，单位是毫秒 }, \x22http\x22: { \x22enabled\x22: true, # 是否要监听http端口 \x22listen\x22: \x22:1988\x22, \x22backdoor\x22: false }, \x22collector\x22: { \x22ifacePrefix\x22: [\x22eth\x22, \x22em\x22], # 默认配置只会采集网卡名称前缀是eth、em的网卡流量，配置为空就会采集所有的，lo的也会采集。可以从\/proc\/net\/dev看到各个网卡的流量信息 \x22mountPoint\x22: [] }, \x22default_tags\x22: { }, \x22ignore\x22: { # 默认采集了200多个metric，可以通过ignore设置为不采集 \x22cpu.busy\x22: true, \x22df.bytes.free\x22: true, \x22df.bytes.total\x22: true, \x22df.bytes.used\x22: true, \x22df.bytes.used.percent\x22: true, \x22df.inodes.total\x22: true, \x22df.inodes.free\x22: true, \x22df.inodes.used\x22: true, \x22df.inodes.used.percent\x22: true, \x22mem.memtotal\x22: true, \x22mem.memused\x22: true, \x22mem.memused.percent\x22: true, \x22mem.memfree\x22: true, \x22mem.swaptotal\x22: true, \x22mem.swapused\x22: true, \x22mem.swapfree\x22: true } } #启动服务 .\/open-falcon start agent 启动进程 .\/open-falcon stop agent 停止进程 .\/open-falcon monitor agent 查看日志 看var目录下的log是否正常，或者浏览器访问其1988端口。另外agent提供了一个--check参数，可以检查agent是否可以正常跑在当前机器上 cd \/home\/work\/open-falcon\/agent\/bin\/ .\/falcon-agent --check 进入监控界面查看： 监控界面 八、参考文档 ## Open-Falcon # 运维监控系统之Open-Falcon https:\/\/www.cnblogs.com\/nulige\/p\/7741580.html # open-falcon安装使用监控树莓派 https:\/\/yq.aliyun.com\/articles\/437196 # 小米运维架构服务监控Open-Falcon https:\/\/blog.csdn.net\/qq_27384769\/article\/details\/79234270 # 架构师的成长之路-博客-导图 https:\/\/github.com\/csy512889371\/learnDoc # Open-Falcon编写的整个脑洞历程 http:\/\/mp.weixin.qq.com\/s?__biz=MjM5OTcxMzE0MQ==\x26mid=400225178\x26idx=1\x26sn=c98609a9b66f84549e41cd421b4df74d'.length;
+	var readTime = Math.round(len / 900);
+	if (readTime >= 1) {
+		$('.read-time').text('预计阅读时间 '+readTime+' 分钟');
+	} else {
+		$('.read-time').text('预计阅读时间不到 1 分钟');
+	}
+});
+</script>
+<script type="text/javascript" src="https://cdn.staticfile.org/ckeditor/4.6.2/ckeditor.js"></script>
+<script type="text/javascript" src="https://static.studygolang.com/static/ckeditor/config.js"></script>
+<script type="text/javascript" src="https://static.studygolang.com/static/ckeditor/article.js"></script>
+
+
+<script type="text/javascript">
+$(function(){
+	$('code[class*="language-"]').parent('pre').addClass('line-numbers');
+});
+</script>
+<script src="https://cdn.staticfile.org/prism/9000.0.1/prism.min.js"></script>
+<script src="https://cdn.staticfile.org/prism/9000.0.1/components/prism-go.min.js"></script>
+<script src="https://cdn.staticfile.org/prism/1.9.0/components/prism-json.min.js"></script>
+<script src="https://cdn.staticfile.org/prism/9000.0.1/components/prism-bash.min.js"></script>
+<script src="https://cdn.staticfile.org/prism/9000.0.1/components/prism-python.min.js"></script>
+<script src="https://cdn.staticfile.org/prism/9000.0.1/components/prism-nasm.min.js"></script>
+<script src="https://cdn.staticfile.org/prism/9000.0.1/components/prism-yaml.min.js"></script>
+<script src="https://cdn.staticfile.org/prism/9000.0.1/plugins/line-numbers/prism-line-numbers.min.js"></script>
+
+<script type="text/javascript">
+Prism.languages.xml = Prism.languages.markup;
+Prism.languages.html = Prism.languages.markup;
+Prism.languages.mathml = Prism.languages.markup;
+Prism.languages.svg = Prism.languages.markup;
+Prism.languages.text = Prism.languages.go;
+Prism.languages.golang = Prism.languages.go;
+Prism.languages.none = Prism.languages.go;
+Prism.languages.console = Prism.languages.bash;
+Prism.languages.shell = Prism.languages.bash;
+Prism.languages.asm = Prism.languages.nasm;
+Prism.languages.makefile = Prism.languages.bash;
+Prism.languages.Dockerfile = Prism.languages.bash;
+Prism.languages.protobuf = Prism.languages.clike;
+Prism.languages.c = Prism.languages.clike;
+</script>
+
+
+
+	
+
+
+
+	
+
+
+
+
+	<script type="text/javascript" src="https://static.studygolang.com/static/dist/js/sidebar.min.js?v=0.2"></script>
+
+	
+		
+		
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<script>
+  (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-4512014793067058",
+    enable_page_level_ads: true
+  });
+</script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-18275235-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+var _hmt = _hmt || [];
+if (uid > 0) {
+	_hmt.push(['_setUserTag', ''+uid, 1]);
+}
+
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?224c227cd9239761ec770bc8c1fb134c";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+<script>
+(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  } else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();
+</script>
+
+	
+
+</body>
+</html>
